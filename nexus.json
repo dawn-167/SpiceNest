@@ -1,0 +1,28 @@
+{
+  "nexus_version": "1.0",
+  "app": {
+    "name": "SpiceNest",
+    "id": "spicenest",
+    "category": "tool",
+    "version": "0.1.0",
+    "description": "LTspice 仿真参考助手，随时随地查询指令、参数、错误和公式",
+    "bundle_id": "com.nexus.tool.spicenest",
+    "url_scheme": "nexus-spicenest",
+    "theme_color": "#FF9500",
+    "hotkey": "Ctrl+Option+S",
+    "min_macos": "13.0"
+  },
+  "commonkit": {
+    "version": "1.0",
+    "components": [
+      "NXHotKeyManager",
+      "NXURLScheme",
+      "NXWindowStyle",
+      "NXStatusItem",
+      "NXPixelUtils",
+      "NXCommon"
+    ]
+  },
+  "created": "2026-08-27",
+  "last_updated": "2026-08-27"
+}

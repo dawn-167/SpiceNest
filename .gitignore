@@ -1,32 +1,35 @@
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-._*
-
-# Build
-build/
+# Build artifacts
 *.app
 *.dSYM
-*.o
-*.swiftmodule
-*.swiftdoc
 
-# Xcode
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# Xcode (if used)
 *.xcodeproj
 *.xcworkspace
 xcuserdata/
-DerivedData/
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xccheckout
+*.xcscmblueprint
+
+# Swift
+.build/
+.swiftpm/
+Package.resolved
 
 # Editor
+.vscode/
+.idea/
 *.swp
 *.swo
 *~
-.idea/
-.vscode/
-.opencode/
 
-# Temp
-*.tmp
-*.bak
+# Logs
 *.log
