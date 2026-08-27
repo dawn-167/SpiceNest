@@ -12,7 +12,6 @@ final class CopyableCodeView: NSView {
     // MARK: - 属性
 
     private let textView = NSTextView()
-    private let scrollView = NSScrollView()
     private let copyButton = NSButton()
     private var isCopied = false
 
@@ -41,15 +40,7 @@ final class CopyableCodeView: NSView {
         layer?.cornerRadius = 6
         layer?.backgroundColor = NSColor(calibratedRed: 0.12, green: 0.12, blue: 0.14, alpha: 1.0).cgColor
 
-        // 滚动视图
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.hasVerticalScroller = false
-        scrollView.hasHorizontalScroller = true
-        scrollView.borderType = .noBorder
-        scrollView.drawsBackground = false
-        addSubview(scrollView)
-
-        // 文本视图
+        // 文本视图（直接使用，不包 ScrollView）
         textView.translatesAutoresizingMaskIntoConstraints = false
         textView.isEditable = false
         textView.isSelectable = true
@@ -58,8 +49,8 @@ final class CopyableCodeView: NSView {
         textView.textColor = NSColor(calibratedRed: 0.85, green: 0.85, blue: 0.88, alpha: 1.0)
         textView.textContainerInset = NSSize(width: 12, height: 10)
         textView.isHorizontallyResizable = true
-        textView.autoresizingMask = .width
-        scrollView.documentView = textView
+        textView.autoresizingMask = [.width, .height]
+        addSubview(textView)
 
         // 复制按钮
         copyButton.translatesAutoresizingMaskIntoConstraints = false
@@ -76,10 +67,10 @@ final class CopyableCodeView: NSView {
         addSubview(copyButton)
 
         NSLayoutConstraint.activate([
-            scrollView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            scrollView.topAnchor.constraint(equalTo: topAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: bottomAnchor),
+            textView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            textView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            textView.topAnchor.constraint(equalTo: topAnchor),
+            textView.bottomAnchor.constraint(equalTo: bottomAnchor),
 
             copyButton.topAnchor.constraint(equalTo: topAnchor, constant: 6),
             copyButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -6),

@@ -68,6 +68,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 if let q = result.params["q"] {
                     performSearch(q)
                 }
+            case "open":
+                if let id = result.params["id"], let item = contentLoader.allItems.first(where: { $0.id == id }) {
+                    showDetail(item)
+                }
             default:
                 break
             }
