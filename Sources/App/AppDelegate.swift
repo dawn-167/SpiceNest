@@ -1,18 +1,50 @@
 import Cocoa
 import Carbon.HIToolbox
 
+// MARK: - 页面状态
+
+enum Page {
+    case home
+    case searchResults
+    case detail
+}
+
 // MARK: - SpiceNest 应用主体
-// Nexus 元宇宙成员应用 - LTspice 仿真参考助手
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    // MARK: - 属性
+
     private var window: NSWindow?
     private var statusItem: NSStatusItem?
 
+    // 服务
+    private let contentLoader = ContentLoader()
+    private lazy var searchService = SearchService(items: contentLoader.allItems)
+
+    // 页面视图
+    private let homeView = HomeView()
+    private let searchResultView = SearchResultView()
+    private let detailView = DetailView()
+
+    // 状态
+    private var currentPage: Page = .home
+    private var currentItem: ContentItem?
+    private var pageHistory: [Page] = []
+
+    // 收藏
+    private var favorites: [String] = []
+    private let favoritesKey = "SpiceNestFavorites"
+
+    // MARK: - 应用生命周期
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        loadFavorites()
         setupWindow()
         setupStatusItem()
         setupHotKey()
+        setupPageCallbacks()
+        showPage(.home)
         showWindow()
     }
 
@@ -25,20 +57,230 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NXHotKeyManager.unregister()
     }
 
-    // MARK: - Nexus URL Scheme 接收（必须实现）
+    // MARK: - URL Scheme
 
     func application(_ application: NSApplication, open urls: [URL]) {
         for url in urls {
             guard let result = NXURLScheme.parse(url) else { continue }
             showWindow()
-            // TODO: 根据 result.action 执行深度链接操作
             switch result.action {
             case "search":
-                if let q = result.params["q"] { print("搜索: \(q)") }
+                if let q = result.params["q"] {
+                    performSearch(q)
+                }
             default:
                 break
             }
         }
+    }
+
+    // MARK: - 窗口设置
+
+    private func setupWindow() {
+        let win = NXWindowStyle.makeFloatingWindow(
+            size: NSSize(width: 560, height: 600),
+            title: "SpiceNest",
+            tintColor: NSColor(red: 1.0, green: 0.584, blue: 0.0, alpha: 0.12),
+            fixedWidth: true
+        )
+        win.center()
+        window = win
+
+        guard let contentView = win.contentView else { return }
+
+        // 创建内容容器视图（添加在毛玻璃和主题色叠加层之上）
+        let containerView = NSView()
+        containerView.translatesAutoresizingMaskIntoConstraints = false
+        containerView.wantsLayer = true
+        contentView.addSubview(containerView)
+        contentView.addConstraints([
+            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            containerView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+        ])
+
+        // 添加三个页面视图到容器
+        for view in [homeView, searchResultView, detailView] {
+            view.translatesAutoresizingMaskIntoConstraints = false
+            containerView.addSubview(view)
+            NSLayoutConstraint.activate([
+                view.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+                view.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+                view.topAnchor.constraint(equalTo: containerView.topAnchor),
+                view.bottomAnchor.constraint(equalTo: containerView.bottomAnchor)
+            ])
+            view.isHidden = true
+        }
+    }
+
+    // MARK: - 页面回调
+
+    private func setupPageCallbacks() {
+        // 首页
+        homeView.onSearchTextChange = { [weak self] text in
+            self?.handleSearchTextChange(text)
+        }
+        homeView.onSearchEnter = { [weak self] text in
+            self?.performSearch(text)
+        }
+        homeView.onCategoryClick = { [weak self] type in
+            self?.handleCategoryClick(type)
+        }
+
+        // 搜索结果页
+        searchResultView.onSearchTextChange = { [weak self] text in
+            self?.handleSearchTextChange(text)
+        }
+        searchResultView.onSearchEnter = { [weak self] text in
+            self?.performSearch(text)
+        }
+        searchResultView.onEscape = { [weak self] in
+            self?.goBack()
+        }
+        searchResultView.onItemClick = { [weak self] item in
+            self?.showDetail(item)
+        }
+        searchResultView.onItemCopy = { [weak self] item in
+            self?.copyItem(item)
+        }
+
+        // 详情页
+        detailView.onBack = { [weak self] in
+            self?.goBack()
+        }
+        detailView.onFavorite = { [weak self] item in
+            self?.toggleFavorite(item)
+        }
+        detailView.onCopyAll = { [weak self] item in
+            self?.copyItem(item)
+        }
+    }
+
+    // MARK: - 页面切换
+
+    private func showPage(_ page: Page) {
+        currentPage = page
+        homeView.isHidden = (page != .home)
+        searchResultView.isHidden = (page != .searchResults)
+        detailView.isHidden = (page != .detail)
+
+        if page == .home {
+            homeView.focusSearchField()
+        } else if page == .searchResults {
+            searchResultView.focusSearchField()
+        }
+    }
+
+    private func goBack() {
+        switch currentPage {
+        case .detail:
+            showPage(.searchResults)
+        case .searchResults:
+            showPage(.home)
+        case .home:
+            toggleWindow()
+        }
+    }
+
+    // MARK: - 搜索逻辑
+
+    private func handleSearchTextChange(_ text: String) {
+        if text.isEmpty {
+            showPage(.home)
+        } else {
+            performSearch(text)
+        }
+    }
+
+    private func performSearch(_ query: String) {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            showPage(.home)
+            return
+        }
+
+        let results = searchService.search(query: trimmed)
+        searchResultView.updateResults(results, query: trimmed)
+        showPage(.searchResults)
+    }
+
+    private func handleCategoryClick(_ type: ContentType) {
+        // 按类型筛选：搜索该类型的所有内容
+        let items = contentLoader.items(ofType: type)
+        var grouped: [ContentType: [ContentItem]] = [:]
+        grouped[type] = items
+        searchResultView.updateResults(grouped, query: type.displayName)
+        showPage(.searchResults)
+    }
+
+    // MARK: - 详情逻辑
+
+    private func showDetail(_ item: ContentItem) {
+        currentItem = item
+
+        // 根据类型加载详情
+        var commandDetail: CommandDetail?
+        var errorDetail: ErrorDetail?
+
+        switch item.type {
+        case .command:
+            commandDetail = contentLoader.loadCommandDetail(id: item.id)
+        case .error:
+            errorDetail = contentLoader.loadErrorDetail(id: item.id)
+        default:
+            break
+        }
+
+        detailView.configure(with: item, commandDetail: commandDetail, errorDetail: errorDetail)
+        detailView.setFavorite(favorites.contains(item.id))
+        showPage(.detail)
+    }
+
+    // MARK: - 复制逻辑
+
+    private func copyItem(_ item: ContentItem) {
+        var textToCopy = ""
+
+        switch item.type {
+        case .command:
+            if let detail = contentLoader.loadCommandDetail(id: item.id) {
+                textToCopy = detail.syntax.first ?? item.title
+            }
+        case .error:
+            if let detail = contentLoader.loadErrorDetail(id: item.id) {
+                textToCopy = detail.copyableCommands.first ?? item.title
+            }
+        default:
+            textToCopy = item.title
+        }
+
+        if textToCopy.isEmpty {
+            textToCopy = item.title
+        }
+
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(textToCopy, forType: .string)
+    }
+
+    // MARK: - 收藏逻辑
+
+    private func loadFavorites() {
+        favorites = UserDefaults.standard.stringArray(forKey: favoritesKey) ?? []
+    }
+
+    private func saveFavorites() {
+        UserDefaults.standard.set(favorites, forKey: favoritesKey)
+    }
+
+    private func toggleFavorite(_ item: ContentItem) {
+        if let index = favorites.firstIndex(of: item.id) {
+            favorites.remove(at: index)
+        } else {
+            favorites.append(item.id)
+        }
+        saveFavorites()
     }
 
     // MARK: - 全局热键
@@ -47,12 +289,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NXHotKeyManager.register(
             keyCode: UInt32(kVK_ANSI_S),
             modifiers: UInt32(controlKey) | UInt32(optionKey),
-            signature: OSType(0x534E), // "SN" - SpiceNest
+            signature: OSType(0x534E),
             onHotKey: { [weak self] in self?.toggleWindow() }
         )
     }
 
-    // MARK: - 菜单栏（必须包含 Nexus 应用子菜单）
+    // MARK: - 菜单栏
 
     private func setupStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
@@ -66,20 +308,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let menu = NSMenu()
 
-        // 显示/隐藏
         let toggle = NSMenuItem(title: "显示 / 隐藏 SpiceNest", action: #selector(toggleWindow), keyEquivalent: "")
         toggle.target = self
         menu.addItem(toggle)
         menu.addItem(.separator())
 
-        // Nexus 应用子菜单（必须）
         let nexusMenu = makeNexusAppsMenu()
         let nexusItem = NSMenuItem(title: "Nexus 应用", action: nil, keyEquivalent: "")
         nexusItem.submenu = nexusMenu
         menu.addItem(nexusItem)
         menu.addItem(.separator())
 
-        // 退出
         let quit = NSMenuItem(title: "退出", action: #selector(quitApp), keyEquivalent: "q")
         quit.target = self
         menu.addItem(quit)
@@ -88,11 +327,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = item
     }
 
-    /// 构建 Nexus 应用子菜单
     private func makeNexusAppsMenu() -> NSMenu {
         let menu = NSMenu(title: "Nexus 应用")
 
-        // Nexus Hub（元宇宙中心）
         let hubItem = NSMenuItem(title: "Nexus Hub", action: #selector(openNexusApp(_:)), keyEquivalent: "")
         hubItem.target = self
         hubItem.representedObject = "hub"
@@ -101,7 +338,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(hubItem)
         menu.addItem(.separator())
 
-        // 已知的 Nexus 应用列表
         let knownApps: [(id: String, name: String)] = [
             ("keyhub", "KeyHub"),
             ("spicenest", "SpiceNest"),
@@ -126,21 +362,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func openNexusApp(_ sender: NSMenuItem) {
         guard let appId = sender.representedObject as? String else { return }
         NXURLScheme.openApp(appId: appId)
-    }
-
-    // MARK: - 窗口
-    // 注意：窗口样式完全由应用自行决定，Nexus 不强制毛玻璃/固定宽度等。
-    // 这里使用 NXWindowStyle 作为示例，也可以完全自定义 NSWindow。
-
-    private func setupWindow() {
-        let win = NXWindowStyle.makeFloatingWindow(
-            size: NSSize(width: 560, height: 400),
-            title: "SpiceNest",
-            tintColor: NSColor(red: 1.0, green: 0.584, blue: 0.0, alpha: 0.12),
-            fixedWidth: true
-        )
-        win.center()
-        window = win
     }
 
     // MARK: - 窗口切换
