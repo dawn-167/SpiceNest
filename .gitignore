@@ -1,0 +1,32 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Build
+build/
+*.app
+*.dSYM
+*.o
+*.swiftmodule
+*.swiftdoc
+
+# Xcode
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+DerivedData/
+
+# Editor
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+.opencode/
+
+# Temp
+*.tmp
+*.bak
+*.log
