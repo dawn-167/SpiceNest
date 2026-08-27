@@ -3,7 +3,7 @@ import Foundation
 // MARK: - 拓扑详情
 
 /// 电路拓扑详情，如分压电路、共射放大器等
-struct TopologyDetail: Codable {
+struct TopologyDetail: Codable, Identifiable {
     let id: String
     let category: String        // 分类（basic/op-amp/power/signal/interface）
     let difficulty: String      // 难度（入门/基础/进阶/高级）

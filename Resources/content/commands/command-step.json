@@ -1,0 +1,61 @@
+{
+  "id": "command-step",
+  "syntax": [
+    ".step <param> <start> <stop> <step>",
+    ".step <param> list <v1> <v2> <v3> ...",
+    ".step oct <param> <npoints> <start> <stop>",
+    ".step dec <param> <npoints> <start> <stop>"
+  ],
+  "parameters": [
+    {
+      "name": "param",
+      "description": "要扫描的参数，可以是独立源值、元器件值、.model 参数、全局参数",
+      "required": true,
+      "defaultValue": null
+    },
+    {
+      "name": "start",
+      "description": "起始值",
+      "required": true,
+      "defaultValue": null
+    },
+    {
+      "name": "stop",
+      "description": "终止值",
+      "required": true,
+      "defaultValue": null
+    },
+    {
+      "name": "step",
+      "description": "步长（线性扫描时）",
+      "required": false,
+      "defaultValue": null
+    }
+  ],
+  "examples": [
+    {
+      "code": ".step param R1 1k 10k 1k",
+      "description": "扫描全局参数 R1 从 1kΩ 到 10kΩ，步长 1kΩ（需要先用 .param R1=1k 定义）"
+    },
+    {
+      "code": ".step V2 list 0 1 2.5 5 10",
+      "description": "扫描电压源 V2 在指定的 5 个值上分别仿真"
+    },
+    {
+      "code": ".step dec param Cload 10 1000p 5",
+      "description": "十倍频程扫描电容 Cload，从 10pF 到 1000pF，每十倍频 5 个点"
+    },
+    {
+      "code": ".step temp list -40 0 25 85 125",
+      "description": "在 5 个温度点分别仿真（温度扫描的便捷写法）"
+    }
+  ],
+  "notes": [
+    ".step 会让整个仿真（.tran/.ac/.dc/.op）重复运行多次，每次改变指定参数",
+    "扫描元器件值时，元器件值需要写成 {参数名} 的形式，如 R1 的值设为 {Rload}",
+    "全局参数用 .param 定义，如 .param Rload=1k",
+    "list 模式适合非均匀的离散点，如温度扫描、特定参数组合",
+    "可以嵌套 .step（最多 3 层），但仿真次数会成倍增加",
+    "LTspice 中 .step 的结果会在波形查看器中以不同颜色显示多条曲线"
+  ]
+}

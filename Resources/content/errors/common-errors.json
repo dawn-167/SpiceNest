@@ -1,0 +1,163 @@
+[
+  {
+    "id": "error-time-step-too-small",
+    "errorPattern": "Time step too small",
+    "category": "convergence",
+    "cause": "电路存在刚性问题（stiff），数值收敛困难。常见于理想开关、理想二极管、陡峭波形、高 Q 值谐振电路。仿真器不断减小时间步长以尝试收敛，最终达到下限。",
+    "solutions": [
+      "添加最小电导：在仿真指令中添加 .options gmin=1e-12",
+      "检查理想开关或二极管，添加寄生参数（如 1pF 电容）减缓状态突变",
+      "增大最大时间步长：.tran 0 10m 1u（最后一个参数是 tmax）",
+      "使用 .ic 命令设置合理的初始条件，帮助收敛",
+      "尝试 .options cshunt=1e-15，为每个节点添加小电容到地"
+    ],
+    "copyableCommands": [
+      ".options gmin=1e-12 cshunt=1e-15",
+      ".tran 0 10m 1u"
+    ]
+  },
+  {
+    "id": "error-singular-matrix",
+    "errorPattern": "Singular matrix",
+    "category": "structure",
+    "cause": "电路矩阵奇异，无法求解。通常是因为存在纯电压源环路（两个电压源直接并联）、纯电感环路、节点悬空、或某个节点没有直流通路到地。",
+    "solutions": [
+      "检查是否有两个电压源直接并联（电压源环路）",
+      "检查是否有纯电感组成的环路",
+      "检查所有节点是否都有直流通路到地（悬空节点需要添加大电阻到地）",
+      "检查电流源是否有直流通路（电流源不能开路）",
+      "添加 .options gmin=1e-12 为每个节点添加最小电导到地"
+    ],
+    "copyableCommands": [
+      ".options gmin=1e-12"
+    ]
+  },
+  {
+    "id": "error-node-is-floating",
+    "errorPattern": "Node ... is floating",
+    "category": "structure",
+    "cause": "某个节点没有直流通路到地，电压无法确定。常见于电容隔离的节点、MOSFET 栅极、理想运放输入端。",
+    "solutions": [
+      "为悬空节点添加一个大电阻到地（如 1GOhm），提供直流通路",
+      "检查电容隔离的节点，确保有泄放通路",
+      "检查 MOSFET 栅极是否有偏置电路",
+      "检查理想运放输入是否有直流反馈通路",
+      "添加 .options gmin=1e-12 为所有节点添加最小电导"
+    ],
+    "copyableCommands": [
+      ".options gmin=1e-12"
+    ]
+  },
+  {
+    "id": "error-unknown-parameter",
+    "errorPattern": "Unknown parameter",
+    "category": "parameter",
+    "cause": ".model 语句或元器件属性中使用了不认识的参数名。可能是拼写错误、大小写错误、或该器件类型不支持此参数。",
+    "solutions": [
+      "检查参数名拼写是否正确（大小写敏感）",
+      "确认该参数属于当前器件类型（BJT/MOSFET/Diode 等参数不同）",
+      "查阅 LTspice 帮助文档中对应器件类型的参数列表",
+      "检查是否有多余的空格或特殊字符",
+      "如果是第三方模型，确认模型语法与 LTspice 兼容"
+    ],
+    "copyableCommands": []
+  },
+  {
+    "id": "error-unknown-device",
+    "errorPattern": "Unknown device",
+    "category": "model",
+    "cause": "元器件引用了未定义的模型或子电路。可能是模型名拼写错误、.model/.subckt 定义缺失、或 .include/.lib 文件未正确加载。",
+    "solutions": [
+      "检查元器件 Value 栏的模型名是否与 .model 定义一致",
+      "确认 .model 或 .subckt 语句存在且拼写正确",
+      "检查 .include 或 .lib 指令路径是否正确，文件是否存在",
+      "如果是第三方模型文件，确认文件格式兼容 LTspice",
+      "检查模型名是否区分大小写（LTspice 模型名通常不区分大小写）"
+    ],
+    "copyableCommands": [
+      ".include \"mymodel.lib\""
+    ]
+  },
+  {
+    "id": "error-gmin-step-failed",
+    "errorPattern": "Gmin step failed",
+    "category": "convergence",
+    "cause": "直流工作点分析中，仿真器通过逐渐增加每个节点到地的最小电导（gmin）来帮助收敛，但最终仍无法收敛。通常是电路存在严重的非线性或不连续。",
+    "solutions": [
+      "增大 gmin 值：.options gmin=1e-9（比默认 1e-12 大）",
+      "检查电路中是否有理想开关、理想二极管等不连续元件",
+      "为不连续元件添加寄生参数（电容、电阻）",
+      "使用 .ic 命令设置合理的初始电压",
+      "尝试 .options cshunt=1e-12 添加节点电容",
+      "检查是否有电压源直接驱动电容（瞬时电流无穷大）"
+    ],
+    "copyableCommands": [
+      ".options gmin=1e-9 cshunt=1e-12"
+    ]
+  },
+  {
+    "id": "error-source-stepping-failed",
+    "errorPattern": "Source stepping failed",
+    "category": "convergence",
+    "cause": "直流工作点分析中，仿真器通过逐渐增加独立源的电压/电流来帮助收敛，但最终仍无法收敛。Gmin stepping 失败后会自动尝试 source stepping。",
+    "solutions": [
+      "与 Gmin step failed 相同的解决方案",
+      "检查独立源的设置是否合理（电压/电流值是否过大）",
+      "检查是否有受控源形成正反馈环路",
+      "使用 .ic 设置初始条件，绕过直流工作点计算",
+      ".tran 加 uic 参数，直接使用初始条件仿真",
+      "检查运放电路是否有直流偏置通路"
+    ],
+    "copyableCommands": [
+      ".options gmin=1e-9 cshunt=1e-12",
+      ".tran 0 10m uic"
+    ]
+  },
+  {
+    "id": "error-iteration-limit-reached",
+    "errorPattern": "Iteration limit reached",
+    "category": "convergence",
+    "cause": "牛顿-拉夫逊迭代达到上限仍未收敛。可能是电路非线性太强、初始猜测不好、或精度要求过高。",
+    "solutions": [
+      "增加迭代上限：.options itl1=500（直流）或 itl4=50（瞬态）",
+      "放宽精度要求：.options reltol=0.01 abstol=1e-9 vntol=1e-5",
+      "使用 .ic 设置合理的初始条件",
+      "检查电路是否有强非线性元件（如理想开关）",
+      "为强非线性元件添加平滑过渡参数",
+      "瞬态仿真中增大 tmax 限制最大时间步长"
+    ],
+    "copyableCommands": [
+      ".options itl1=500 itl4=50",
+      ".options reltol=0.01 abstol=1e-9 vntol=1e-5"
+    ]
+  },
+  {
+    "id": "error-duplicate-device-name",
+    "errorPattern": "Duplicate device name",
+    "category": "structure",
+    "cause": "原理图中存在两个相同名称的元器件。LTspice 中每个元器件的参考标识（RefDes）必须唯一，如 R1、R2、C1、C2。",
+    "solutions": [
+      "检查原理图中是否有重复的元器件标号（如两个 R1）",
+      "复制粘贴元器件时容易产生重复标号，需要手动修改",
+      "使用 Edit > Renumber 功能自动重新编号",
+      "检查子电路内部是否有与外部冲突的标号",
+      "删除重复的元器件或修改其标号"
+    ],
+    "copyableCommands": []
+  },
+  {
+    "id": "error-syntax-error",
+    "errorPattern": "Syntax error",
+    "category": "syntax",
+    "cause": "SPICE 网表或仿真指令中存在语法错误。可能是拼写错误、缺少参数、括号不匹配、或使用了不支持的语法。",
+    "solutions": [
+      "检查报错信息中指出的行号，查看对应语句",
+      "检查仿真指令（.tran、.ac、.dc 等）的参数是否完整",
+      "检查 .model 语句的语法是否正确",
+      "检查是否有多余的空格、制表符或特殊字符",
+      "如果是手写网表，检查元器件行的格式（节点名、值、模型名）",
+      "第三方模型可能使用 PSpice 语法，需要转换为 LTspice 兼容格式"
+    ],
+    "copyableCommands": []
+  }
+]

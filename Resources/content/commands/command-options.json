@@ -1,0 +1,93 @@
+{
+  "id": "command-options",
+  "syntax": [
+    ".options <param1>=<value1> [<param2>=<value2> ...]"
+  ],
+  "parameters": [
+    {
+      "name": "gmin",
+      "description": "最小电导（S），每个节点到地的最小电导，帮助收敛",
+      "required": false,
+      "defaultValue": "1e-12"
+    },
+    {
+      "name": "cshunt",
+      "description": "每个节点到地的并联电容（F），帮助瞬态收敛",
+      "required": false,
+      "defaultValue": "0"
+    },
+    {
+      "name": "itl1",
+      "description": "直流工作点迭代上限",
+      "required": false,
+      "defaultValue": "100"
+    },
+    {
+      "name": "itl4",
+      "description": "瞬态分析迭代上限",
+      "required": false,
+      "defaultValue": "10"
+    },
+    {
+      "name": "reltol",
+      "description": "相对误差精度",
+      "required": false,
+      "defaultValue": "0.001"
+    },
+    {
+      "name": "abstol",
+      "description": "电流绝对误差精度（A）",
+      "required": false,
+      "defaultValue": "1e-12"
+    },
+    {
+      "name": "vntol",
+      "description": "电压绝对误差精度（V）",
+      "required": false,
+      "defaultValue": "1e-6"
+    },
+    {
+      "name": "tnom",
+      "description": "模型参数标称温度（°C）",
+      "required": false,
+      "defaultValue": "27"
+    },
+    {
+      "name": "method",
+      "description": "瞬态积分方法：trap（梯形法）、gear（变阶积分）",
+      "required": false,
+      "defaultValue": "trap"
+    }
+  ],
+  "examples": [
+    {
+      "code": ".options gmin=1e-12 cshunt=1e-15",
+      "description": "添加最小电导和节点电容，帮助收敛（最常用的收敛选项）"
+    },
+    {
+      "code": ".options itl1=500 itl4=50",
+      "description": "增加迭代上限，给仿真器更多迭代次数来收敛"
+    },
+    {
+      "code": ".options reltol=0.01 abstol=1e-9 vntol=1e-5",
+      "description": "放宽精度要求，加快仿真速度（精度要求不高时可用）"
+    },
+    {
+      "code": ".options method=gear",
+      "description": "使用变阶 Gear 积分法，对刚性电路更稳定（但可能更慢）"
+    },
+    {
+      "code": ".options tnom=25",
+      "description": "设置模型标称温度为 25°C（默认是 27°C）"
+    }
+  ],
+  "notes": [
+    "收敛问题是 LTspice 最常见的问题，.options 是解决收敛问题的主要手段",
+    "gmin 和 cshunt 是最常用的收敛选项，几乎所有收敛困难的电路都可以先试这两个",
+    "增加 itl1/itl4 给仿真器更多迭代次数，但如果根本不收敛，增加次数也没用",
+    "放宽 reltol/abstol/vntol 可以加快仿真，但会降低精度，一般不建议修改",
+    "method=gear 对刚性电路（stiff）更稳定，但数值阻尼更大，可能影响高频精度",
+    "LTspice 有自动收敛算法（Gmin stepping、Source stepping），默认会自动尝试",
+    "所有选项都可以在 Simulate > Edit Simulation Cmd > Options 中图形化设置"
+  ]
+}

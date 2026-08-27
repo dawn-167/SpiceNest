@@ -1,0 +1,37 @@
+{
+  "id": "command-temp",
+  "syntax": [
+    ".temp <t1> <t2> ...",
+    ".temp <t1>"
+  ],
+  "parameters": [
+    {
+      "name": "t1, t2, ...",
+      "description": "仿真温度（摄氏度），可指定多个温度点分别仿真",
+      "required": true,
+      "defaultValue": null
+    }
+  ],
+  "examples": [
+    {
+      "code": ".temp 25",
+      "description": "在 25°C 下仿真（室温）"
+    },
+    {
+      "code": ".temp -40 0 25 85 125",
+      "description": "在 5 个温度点分别仿真（工业级温度范围）"
+    },
+    {
+      "code": ".temp 100",
+      "description": "在 100°C 高温下仿真"
+    }
+  ],
+  "notes": [
+    ".temp 指定的是仿真环境温度，会影响元器件模型中的温度相关参数（如 IS、VBE、电阻温度系数等）",
+    "指定多个温度时，仿真会重复运行多次，每个温度点一组结果",
+    "默认温度是 27°C（TNOM 参数，可通过 .options tnom=25 修改）",
+    "注意：.temp 是仿真温度，tnom 是模型参数标称温度，两者不同",
+    "温度扫描也可以用 .step temp list -40 0 25 85 125 实现，效果相同",
+    "元器件的温度系数在 .model 中定义（如电阻的 tc1、tc2，BJT 的 xti、eg 等）"
+  ]
+}

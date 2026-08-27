@@ -1,0 +1,54 @@
+{
+  "id": "command-dc",
+  "syntax": [
+    ".dc <src> <vstart> <vstop> <vincrement>",
+    ".dc <src1> <start1> <stop1> <step1> <src2> <start2> <stop2> <step2>"
+  ],
+  "parameters": [
+    {
+      "name": "src",
+      "description": "要扫描的独立源名称（如 V1、I1）",
+      "required": true,
+      "defaultValue": null
+    },
+    {
+      "name": "vstart",
+      "description": "扫描起始值",
+      "required": true,
+      "defaultValue": null
+    },
+    {
+      "name": "vstop",
+      "description": "扫描终止值",
+      "required": true,
+      "defaultValue": null
+    },
+    {
+      "name": "vincrement",
+      "description": "扫描步长",
+      "required": true,
+      "defaultValue": null
+    }
+  ],
+  "examples": [
+    {
+      "code": ".dc V1 0 5 0.1",
+      "description": "扫描电压源 V1 从 0V 到 5V，步长 0.1V"
+    },
+    {
+      "code": ".dc V1 -5 5 0.05 V2 0 10 2",
+      "description": "嵌套扫描：V2 每变化一次，V1 完整扫描一遍（绘制传输特性曲线族）"
+    },
+    {
+      "code": ".dc I1 0 10m 0.1m",
+      "description": "扫描电流源 I1 从 0 到 10mA，步长 0.1mA"
+    }
+  ],
+  "notes": [
+    ".dc 是直流传输特性分析，每个扫描点都执行一次 .op 计算",
+    "常用于绘制 IV 曲线、传输特性曲线、工作点随参数变化的曲线",
+    "嵌套扫描时，第一个源是内层（变化快），第二个源是外层（变化慢）",
+    "可以扫描电压源、电流源，也可以扫描元器件参数（用 .step 更方便）",
+    "电压单位：V=伏, mV=毫伏, uV=微伏；电流单位：A=安, mA=毫安, uA=微安"
+  ]
+}

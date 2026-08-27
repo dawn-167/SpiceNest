@@ -1,0 +1,186 @@
+{
+  "version": "0.1",
+  "last_updated": "2026-08-27",
+  "items": [
+    {
+      "id": "command-op",
+      "type": "command",
+      "title": ".op",
+      "chineseTitle": "直流工作点",
+      "summary": "计算电路在直流稳态下的节点电压和支路电流",
+      "tags": ["op", "直流", "工作点", "静态", "operating point", "dc", "偏置"],
+      "related": ["command-dc", "command-tran", "command-options"]
+    },
+    {
+      "id": "command-tran",
+      "type": "command",
+      "title": ".tran",
+      "chineseTitle": "瞬态仿真",
+      "summary": "计算电路在指定时间范围内的时域响应",
+      "tags": ["tran", "瞬态", "时域", "时间仿真", "transient", "tstop", "tmax", "tstart"],
+      "related": ["command-step", "command-meas", "command-ic", "command-options", "error-time-step-too-small"]
+    },
+    {
+      "id": "command-ac",
+      "type": "command",
+      "title": ".ac",
+      "chineseTitle": "交流扫描",
+      "summary": "计算电路的频率响应（幅频/相频特性）",
+      "tags": ["ac", "交流", "频率", "扫描", "频响", "bode", "波特图", "decade", "octave"],
+      "related": ["command-op", "command-meas", "command-options"]
+    },
+    {
+      "id": "command-dc",
+      "type": "command",
+      "title": ".dc",
+      "chineseTitle": "直流扫描",
+      "summary": "扫描直流源或元器件参数，观察工作点变化",
+      "tags": ["dc", "直流扫描", "参数扫描", "transfer", "iv曲线", "sweep"],
+      "related": ["command-op", "command-step", "command-options"]
+    },
+    {
+      "id": "command-step",
+      "type": "command",
+      "title": ".step",
+      "chineseTitle": "参数扫描",
+      "summary": "多次运行仿真，每次改变指定参数的值",
+      "tags": ["step", "参数扫描", "多次仿真", "param", "list", "range", "lin", "oct", "dec"],
+      "related": ["command-dc", "command-tran", "command-ac", "command-options"]
+    },
+    {
+      "id": "command-meas",
+      "type": "command",
+      "title": ".meas",
+      "chineseTitle": "测量参数",
+      "summary": "在仿真结果中自动测量指定参数并输出",
+      "tags": ["meas", "测量", "measure", "参数提取", "find", "when", "at", "avg", "max", "min", "rms"],
+      "related": ["command-tran", "command-ac", "command-options"]
+    },
+    {
+      "id": "command-temp",
+      "type": "command",
+      "title": ".temp",
+      "chineseTitle": "温度扫描",
+      "summary": "指定仿真温度，或扫描多个温度点",
+      "tags": ["temp", "温度", "temperature", "温度扫描", "热", "温漂", "tnom"],
+      "related": ["command-step", "command-options", "command-model"]
+    },
+    {
+      "id": "command-ic",
+      "type": "command",
+      "title": ".ic",
+      "chineseTitle": "初始条件",
+      "summary": "设置节点电压的初始值，帮助瞬态仿真收敛",
+      "tags": ["ic", "初始条件", "initial condition", "节点电压", "收敛", "uic", "启动"],
+      "related": ["command-tran", "command-options", "error-time-step-too-small", "error-singular-matrix"]
+    },
+    {
+      "id": "command-options",
+      "type": "command",
+      "title": ".options",
+      "chineseTitle": "仿真选项",
+      "summary": "设置仿真器的全局参数（收敛、精度、速度等）",
+      "tags": ["options", "仿真选项", "全局参数", "gmin", "cshunt", "itl1", "itl4", "reltol", "abstol", "vntol", "收敛"],
+      "related": ["command-tran", "command-op", "command-ic", "error-time-step-too-small", "error-gmin-step-failed", "error-iteration-limit-reached"]
+    },
+    {
+      "id": "command-model",
+      "type": "command",
+      "title": ".model",
+      "chineseTitle": "模型定义",
+      "summary": "定义元器件的 SPICE 模型参数",
+      "tags": ["model", "模型定义", "spice模型", "bjt", "mosfet", "diode", "jfet", "参数", "is", "bf", "vto"],
+      "related": ["param-bjt-is", "param-mosfet-vto", "command-include", "error-unknown-device"]
+    },
+    {
+      "id": "error-time-step-too-small",
+      "type": "error",
+      "title": "Time step too small",
+      "chineseTitle": "时间步长过小",
+      "summary": "仿真器不断减小时间步长仍无法收敛，达到下限",
+      "tags": ["time step", "时间步长", "收敛", "stiff", "刚性", "瞬态", "tran", "tmax"],
+      "related": ["command-tran", "command-options", "command-ic", "error-gmin-step-failed", "error-source-stepping-failed"]
+    },
+    {
+      "id": "error-singular-matrix",
+      "type": "error",
+      "title": "Singular matrix",
+      "chineseTitle": "奇异矩阵",
+      "summary": "电路矩阵奇异，通常是节点悬空或存在理想电压源环路",
+      "tags": ["singular", "奇异矩阵", "矩阵", "节点悬空", "floating", "电压源环路", "收敛", "结构"],
+      "related": ["error-node-is-floating", "command-ic", "command-options", "command-op"]
+    },
+    {
+      "id": "error-node-is-floating",
+      "type": "error",
+      "title": "Node ... is floating",
+      "chineseTitle": "节点悬空",
+      "summary": "某个节点没有直流通路到地，电压无法确定",
+      "tags": ["floating", "悬空", "节点", "直流通路", "gmin", "结构", "未连接"],
+      "related": ["error-singular-matrix", "command-options", "command-op"]
+    },
+    {
+      "id": "error-unknown-parameter",
+      "type": "error",
+      "title": "Unknown parameter",
+      "chineseTitle": "未知参数",
+      "summary": ".model 或元器件属性中使用了不认识的参数名",
+      "tags": ["unknown parameter", "未知参数", "参数名", "拼写", "model", "属性"],
+      "related": ["command-model", "param-bjt-is", "param-mosfet-vto", "error-unknown-device"]
+    },
+    {
+      "id": "error-unknown-device",
+      "type": "error",
+      "title": "Unknown device",
+      "chineseTitle": "未知器件",
+      "summary": "元器件引用了未定义的模型或子电路",
+      "tags": ["unknown device", "未知器件", "模型未定义", "subckt", "model", "include", "lib"],
+      "related": ["command-model", "command-include", "error-unknown-parameter"]
+    },
+    {
+      "id": "error-gmin-step-failed",
+      "type": "error",
+      "title": "Gmin step failed",
+      "chineseTitle": "Gmin步进失败",
+      "summary": "直流工作点分析中，通过增加最小电导仍无法收敛",
+      "tags": ["gmin", "最小电导", "步进", "收敛", "直流", "op", "工作点"],
+      "related": ["command-op", "command-options", "command-ic", "error-source-stepping-failed", "error-time-step-too-small"]
+    },
+    {
+      "id": "error-source-stepping-failed",
+      "type": "error",
+      "title": "Source stepping failed",
+      "chineseTitle": "源步进失败",
+      "summary": "直流工作点分析中，通过逐渐增加源电压仍无法收敛",
+      "tags": ["source stepping", "源步进", "收敛", "直流", "op", "工作点", "gmin"],
+      "related": ["command-op", "command-options", "command-ic", "error-gmin-step-failed", "error-time-step-too-small"]
+    },
+    {
+      "id": "error-iteration-limit-reached",
+      "type": "error",
+      "title": "Iteration limit reached",
+      "chineseTitle": "迭代次数超限",
+      "summary": "牛顿-拉夫逊迭代达到上限仍未收敛",
+      "tags": ["iteration", "迭代", "收敛", "itl1", "itl4", "牛顿", "newton", "options"],
+      "related": ["command-options", "command-op", "command-tran", "error-time-step-too-small"]
+    },
+    {
+      "id": "error-duplicate-device-name",
+      "type": "error",
+      "title": "Duplicate device name",
+      "chineseTitle": "器件名重复",
+      "summary": "原理图中存在两个相同名称的元器件",
+      "tags": ["duplicate", "重复", "器件名", "命名", "结构", "refdes"],
+      "related": ["error-singular-matrix", "error-node-is-floating"]
+    },
+    {
+      "id": "error-syntax-error",
+      "type": "error",
+      "title": "Syntax error",
+      "chineseTitle": "语法错误",
+      "summary": "SPICE 网表或指令中存在语法错误",
+      "tags": ["syntax", "语法", "错误", "网表", "netlist", "指令", "拼写"],
+      "related": ["command-tran", "command-op", "command-ac", "command-model"]
+    }
+  ]
+}

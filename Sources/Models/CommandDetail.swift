@@ -3,7 +3,7 @@ import Foundation
 // MARK: - 指令详情
 
 /// 仿真指令详情，如 .tran、.ac、.op 等
-struct CommandDetail: Codable {
+struct CommandDetail: Codable, Identifiable {
     let id: String
     let syntax: [String]        // 语法形式（支持多种）
     let parameters: [ParamDef]  // 参数说明

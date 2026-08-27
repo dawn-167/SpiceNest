@@ -3,7 +3,7 @@ import Foundation
 // MARK: - 错误详情
 
 /// LTspice 常见错误详情
-struct ErrorDetail: Codable {
+struct ErrorDetail: Codable, Identifiable {
     let id: String
     let errorPattern: String    // 匹配模式（支持模糊匹配）
     let category: String        // 错误类别（收敛/结构/参数/语法/文件）

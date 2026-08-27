@@ -3,7 +3,7 @@ import Foundation
 // MARK: - 公式详情
 
 /// 公式速算详情，如 RC 截止频率、分压公式等
-struct FormulaDetail: Codable {
+struct FormulaDetail: Codable, Identifiable {
     let id: String
     let formula: String         // 公式表达式（纯文本）
     let description: String     // 公式说明（算什么、什么意思）

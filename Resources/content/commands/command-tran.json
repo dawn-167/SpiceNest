@@ -1,0 +1,60 @@
+{
+  "id": "command-tran",
+  "syntax": [
+    ".tran <tstop>",
+    ".tran <tstart> <tstop>",
+    ".tran <tstart> <tstop> <tmax>",
+    ".tran <tstart> <tstop> <tmax> <tstep>"
+  ],
+  "parameters": [
+    {
+      "name": "tstop",
+      "description": "仿真停止时间",
+      "required": true,
+      "defaultValue": null
+    },
+    {
+      "name": "tstart",
+      "description": "开始保存数据的时间，之前的数据不保存但仍仿真",
+      "required": false,
+      "defaultValue": "0"
+    },
+    {
+      "name": "tmax",
+      "description": "最大时间步长，限制仿真器的最大步长",
+      "required": false,
+      "defaultValue": "自动"
+    },
+    {
+      "name": "tstep",
+      "description": "起始时间步长建议值",
+      "required": false,
+      "defaultValue": "自动"
+    }
+  ],
+  "examples": [
+    {
+      "code": ".tran 10m",
+      "description": "仿真 0~10ms"
+    },
+    {
+      "code": ".tran 1m 10m",
+      "description": "仿真 0~10ms，但只保存 1ms 之后的数据"
+    },
+    {
+      "code": ".tran 0 10m 1u",
+      "description": "仿真 0~10ms，限制最大时间步长为 1us"
+    },
+    {
+      "code": ".tran 0 100m 100u uic",
+      "description": "仿真 0~100ms，使用 .ic 设置的初始条件（uic = use initial conditions）"
+    }
+  ],
+  "notes": [
+    "tmax 设置过小会导致仿真变慢，但可以提高精度；设置过大可能丢失快速变化的波形细节",
+    "tstart 之前的时间仍然会仿真，只是不保存数据，用于跳过初始瞬态",
+    "如果仿真报错 'Time step too small'，可以尝试增大 tmax 或添加 .options gmin/cshunt",
+    "uic 参数强制仿真器使用 .ic 设置的初始条件，而不是先计算直流工作点",
+    "时间单位：s=秒, m=毫秒, u=微秒, n=纳秒, p=皮秒"
+  ]
+}

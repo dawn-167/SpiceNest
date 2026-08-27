@@ -1,0 +1,53 @@
+{
+  "id": "command-meas",
+  "syntax": [
+    ".meas <analysis> <result> <function> <args>",
+    ".meas <analysis> <result> FIND <expr> AT <value>",
+    ".meas <analysis> <result> FIND <expr> WHEN <condition>"
+  ],
+  "parameters": [
+    {
+      "name": "analysis",
+      "description": "分析类型：tran、ac、dc、op",
+      "required": true,
+      "defaultValue": null
+    },
+    {
+      "name": "result",
+      "description": "测量结果的变量名，输出到 .log 文件",
+      "required": true,
+      "defaultValue": null
+    },
+    {
+      "name": "function",
+      "description": "测量函数：FIND、WHEN、AVG、MAX、MIN、RMS、PP、INTEG、DERIV、CROSS",
+      "required": true,
+      "defaultValue": null
+    }
+  ],
+  "examples": [
+    {
+      "code": ".meas tran Vout_max MAX V(out) FROM 1m TO 10m",
+      "description": "测量 1ms~10ms 内 V(out) 的最大值"
+    },
+    {
+      "code": ".meas tran Tdelay TRIG V(in) VAL=1.5 RISE=1 TARG V(out) VAL=1.5 RISE=1",
+      "description": "测量输入上升沿到输出上升沿的延迟时间"
+    },
+    {
+      "code": ".meas ac Gain_at_1k FIND Vdb(out) AT 1k",
+      "description": "测量 1kHz 时的增益（dB）"
+    },
+    {
+      "code": ".meas tran Iavg AVG I(R1) FROM 0 TO 10m",
+      "description": "测量 0~10ms 内 R1 电流的平均值"
+    }
+  ],
+  "notes": [
+    ".meas 在仿真完成后自动执行测量，结果输出到 .log 文件",
+    "TRIG/TARG 用于测量两个事件之间的时间差，常用于延迟、上升时间测量",
+    "VAL 是阈值，RISE/FALL 指定第几次上升/下降沿，CROSS 指定第几次穿越",
+    "FROM/TO 限定测量的时间/频率范围，不指定则测量整个范围",
+    "交流分析中用 Vdb() 表示 dB 值，Vp() 表示相位"
+  ]
+}

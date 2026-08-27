@@ -1,0 +1,53 @@
+{
+  "id": "command-ac",
+  "syntax": [
+    ".ac <sweep_type> <npoints> <fstart> <fstop>"
+  ],
+  "parameters": [
+    {
+      "name": "sweep_type",
+      "description": "扫描类型：lin（线性）、oct（倍频程）、dec（十倍频程）",
+      "required": true,
+      "defaultValue": null
+    },
+    {
+      "name": "npoints",
+      "description": "扫描点数：lin 时为总点数；oct/dec 时为每倍频/十倍频的点数",
+      "required": true,
+      "defaultValue": null
+    },
+    {
+      "name": "fstart",
+      "description": "起始频率",
+      "required": true,
+      "defaultValue": null
+    },
+    {
+      "name": "fstop",
+      "description": "终止频率",
+      "required": true,
+      "defaultValue": null
+    }
+  ],
+  "examples": [
+    {
+      "code": ".ac dec 10 1 100k",
+      "description": "十倍频程扫描，每十倍频 10 个点，1Hz~100kHz（波特图常用）"
+    },
+    {
+      "code": ".ac lin 100 1k 10k",
+      "description": "线性扫描 100 个点，1kHz~10kHz"
+    },
+    {
+      "code": ".ac oct 20 100 10k",
+      "description": "倍频程扫描，每倍频 20 个点，100Hz~10kHz"
+    }
+  ],
+  "notes": [
+    ".ac 是小信号交流分析，先计算直流工作点，然后在工作点附近线性化电路",
+    "需要至少一个独立源设置 AC 幅值（如电压源的 AC 属性设为 1），否则结果全为 0",
+    "波特图通常用 dec 扫描，频率轴对数坐标",
+    "频率单位：Hz=赫兹, k=千赫, meg=兆赫, g=吉赫",
+    "可以用 .meas 测量截止频率、增益、相位裕度等参数"
+  ]
+}

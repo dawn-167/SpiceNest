@@ -3,7 +3,7 @@ import Foundation
 // MARK: - 技巧详情
 
 /// 操作技巧详情，如"如何快速测量相位裕度"等
-struct TipDetail: Codable {
+struct TipDetail: Codable, Identifiable {
     let id: String
     let scenario: String        // 适用场景
     let steps: [TipStep]        // 操作步骤

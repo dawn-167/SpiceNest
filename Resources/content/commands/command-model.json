@@ -1,0 +1,55 @@
+{
+  "id": "command-model",
+  "syntax": [
+    ".model <name> <type> (<param1>=<value1> <param2>=<value2> ...)"
+  ],
+  "parameters": [
+    {
+      "name": "name",
+      "description": "模型名称，元器件引用时使用",
+      "required": true,
+      "defaultValue": null
+    },
+    {
+      "name": "type",
+      "description": "器件类型：NPN、PNP、NMO、PMO、NJF、PJF、D、SW、CSW、URC、LTRA、VCCS、CCCS、VCVS、CCVS 等",
+      "required": true,
+      "defaultValue": null
+    },
+    {
+      "name": "param=value",
+      "description": "模型参数，不同类型有不同参数",
+      "required": false,
+      "defaultValue": "使用默认值"
+    }
+  ],
+  "examples": [
+    {
+      "code": ".model MyNPN NPN(IS=1e-14 BF=200 VAF=100)",
+      "description": "定义一个 NPN 晶体管模型，反向饱和电流 1e-14A，直流增益 200，Early 电压 100V"
+    },
+    {
+      "code": ".model MyNMOS NMOS(VTO=1.0 KP=100u LAMBDA=0.01)",
+      "description": "定义一个 N 沟道 MOSFET 模型，阈值电压 1V，跨导参数 100uA/V²，沟道长度调制 0.01"
+    },
+    {
+      "code": ".model MyDiode D(IS=1e-15 N=1.0 RS=0.1 CJO=1p TT=10n)",
+      "description": "定义一个二极管模型，反向饱和电流 1e-15A，发射系数 1.0，串联电阻 0.1Ω，结电容 1pF，渡越时间 10ns"
+    },
+    {
+      "code": ".model MySwitch SW(Ron=1 Roff=1Meg Vt=2.5 Vh=0.5)",
+      "description": "定义一个电压控制开关模型，导通电阻 1Ω，关断电阻 1MΩ，阈值 2.5V，迟滞 0.5V"
+    }
+  ],
+  "notes": [
+    ".model 定义的是器件模型参数，元器件通过 Value 栏引用模型名（如 Q1 c b e 0 MyNPN）",
+    "不同器件类型的参数完全不同，需要查阅 LTspice 帮助文档或 SPICE 手册",
+    "未指定的参数使用 LTspice 默认值（默认值通常是合理的通用值）",
+    "厂商提供的模型文件（.lib/.mod）通常包含大量 .model 或 .subckt 定义，通过 .include 或 .lib 引入",
+    "模型名区分大小写，且不能与内置模型名冲突",
+    "BJT 常用参数：IS、BF、BR、VAF、VAR、RB、RC、RE、CJE、CJC、TF、TR、EG、XTI",
+    "MOSFET 常用参数：VTO、KP、GAMMA、PHI、LAMBDA、RD、RS、RG、CBD、CBS、TOX、NSUB、UO",
+    "二极管常用参数：IS、N、RS、IKF、EG、XTI、CJO、VJ、M、FC、TT、BV、IBV",
+    "如果报错 'Unknown parameter'，说明参数名拼写错误或该器件类型不支持此参数"
+  ]
+}

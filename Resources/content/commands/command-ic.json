@@ -1,0 +1,38 @@
+{
+  "id": "command-ic",
+  "syntax": [
+    ".ic V(<node>)=<value> [V(<node2>)=<value2> ...]"
+  ],
+  "parameters": [
+    {
+      "name": "node",
+      "description": "节点名称",
+      "required": true,
+      "defaultValue": null
+    },
+    {
+      "name": "value",
+      "description": "该节点的初始电压值（V）",
+      "required": true,
+      "defaultValue": null
+    }
+  ],
+  "examples": [
+    {
+      "code": ".ic V(out)=0 V(cap)=2.5",
+      "description": "设置 out 节点初始电压 0V，cap 节点初始电压 2.5V"
+    },
+    {
+      "code": ".ic V(1)=5 V(2)=0",
+      "description": "设置节点 1 初始电压 5V，节点 2 初始电压 0V"
+    }
+  ],
+  "notes": [
+    ".ic 设置的是瞬态仿真的初始条件，只在 .tran 仿真开始时生效",
+    "默认情况下，仿真器会先计算直流工作点（.op）作为初始条件；.ic 可以覆盖某些节点的初始值",
+    "如果 .tran 加了 uic 参数（use initial conditions），则完全使用 .ic 设置的初始条件，不计算直流工作点",
+    ".ic 常用于帮助收敛困难的电路（如振荡器、含理想开关的电路），给一个合理的起始状态",
+    "也可以在电容上设置 IC=电压值（如 C1 out 0 1u IC=2.5），效果与 .ic 类似",
+    "电感可以设置 IC=电流值（如 L1 in out 10u IC=0.1），设置初始电流"
+  ]
+}
