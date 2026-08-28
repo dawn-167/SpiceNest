@@ -1,6 +1,7 @@
 # SpiceNest 搜索回归用例集
 # 用途：每次搜索逻辑改动或内容增加后，跑一遍这些用例验证搜索结果正确
 # 格式：每行一个用例，格式为 "查询词|预期包含的内容id（逗号分隔）|备注"
+#       id 前加 "!" 表示该条不应出现在结果中（如 tran|command-tran,!command-dc）
 # 依据：ERROR_PREVENTION.md 第三章 P1 项 #4
 # 用法：配合 Services 层测试入口使用
 
@@ -48,3 +49,15 @@ asdfghjkl||无结果
 .TRAN|command-tran|大写指令名
 .Tran|command-tran|混合大小写
 TRAN|command-tran|无点号大写
+
+# === 词边界匹配（P1：消除子串误命中）===
+tran|command-tran,!command-dc|词边界：tran 不应命中 .dc 的 transfer 标签
+transfer|command-dc|完整单词仍命中 transfer 标签
+.op|command-op,!command-options|词边界：.op 不应命中 .options
+gmin|command-options,error-gmin-step-failed|短词精确命中标签
+
+# === 粘贴报错直达（P1：errorPattern 匹配）===
+Node N005 is floating|error-node-is-floating|粘贴真实报错，通配符展开命中
+node is floating|error-node-is-floating|省略省略号的报错文本
+Error: Singular matrix|error-singular-matrix|带前缀的报错文本
+time step too small and cannot converge|error-time-step-too-small|报错片段命中

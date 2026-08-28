@@ -1,13 +1,5 @@
 import Cocoa
 
-// MARK: - 顶部对齐的纵向堆栈视图
-
-/// NSScrollView 的 documentView 默认非翻转坐标系，纵向堆栈会从底部排布导致顶部空白。
-/// 使用翻转坐标系让内容从顶部开始排布。
-private final class FlippedStackView: NSStackView {
-    override var isFlipped: Bool { true }
-}
-
 // MARK: - 搜索结果页视图
 
 /// 搜索结果页：顶部搜索框 + 按类型分组的结果列表 + 空状态 + 键盘选择

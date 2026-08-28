@@ -18,14 +18,16 @@ final class DetailView: NSView {
     /// 点击关联内容回调
     var onRelatedItemClick: ((ContentItem) -> Void)?
 
-    /// 点击查快捷键回调
-    var onKeyHub: (() -> Void)?
+    /// 点击查快捷键回调（置为 nil 时自动隐藏"查快捷键"按钮，如 KeyHub 未安装）
+    var onKeyHub: (() -> Void)? {
+        didSet { keyhubButton.isHidden = (onKeyHub == nil) }
+    }
 
     // MARK: - 属性
 
     private let backButton = NSButton()
     private let scrollView = NSScrollView()
-    private let contentStackView = NSStackView()
+    private let contentStackView = FlippedStackView()
     private let titleLabel = NSTextField(labelWithString: "")
     private let chineseTitleLabel = NSTextField(labelWithString: "")
     private let typeTag = TagView()
@@ -156,6 +158,7 @@ final class DetailView: NSView {
         keyhubButton.image = keyhubIcon
         keyhubButton.imagePosition = .imageLeft
         keyhubButton.contentTintColor = .secondaryLabelColor
+        keyhubButton.isHidden = true
         addSubview(keyhubButton)
 
         // 回顶按钮（P-034）：滚动超过 200pt 时浮现
@@ -329,10 +332,6 @@ final class DetailView: NSView {
         }
     }
 
-    private func renderGenericDetail(_ item: ContentItem) {
-        // 通用详情已由 relatedItems 统一处理，此方法保留为空
-    }
-
     /// 渲染关联内容（可点击跳转）
     private func renderRelatedItems(_ items: [ContentItem]) {
         addSectionTitle("相关内容")
@@ -402,6 +401,14 @@ final class DetailView: NSView {
     }
 
     // MARK: - 动作
+
+    /// 详情页作为第一响应者接收 Esc
+    override var acceptsFirstResponder: Bool { true }
+
+    /// Esc 键返回上一页
+    override func cancelOperation(_ sender: Any?) {
+        onBack?()
+    }
 
     @objc private func backClicked() {
         onBack?()

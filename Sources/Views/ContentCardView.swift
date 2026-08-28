@@ -56,23 +56,19 @@ final class ContentCardView: NSView {
         layer?.shadowRadius = 8
         layer?.shadowOffset = CGSize(width: 0, height: -2)
 
-        // 渐变背景（顶亮底暗，增强立体感）
+        // 渐变背景（顶亮底暗，增强立体感；动态色适配深色模式）
         gradientLayer.cornerRadius = 12
-        gradientLayer.colors = [
-            NSColor(white: 1.0, alpha: 1.0).cgColor,
-            NSColor(white: 0.92, alpha: 1.0).cgColor
-        ]
         gradientLayer.startPoint = CGPoint(x: 0, y: 0)
         gradientLayer.endPoint = CGPoint(x: 0, y: 1)
         gradientLayer.frame = CGRect(x: 0, y: 0, width: 300, height: 100) // 初始 frame，layout 时更新
         layer?.insertSublayer(gradientLayer, at: 0)
 
         // 顶部高光线（增强立体感，只显示顶部1pt）
-        highlightLayer.backgroundColor = NSColor.white.withAlphaComponent(0.5).cgColor
         highlightLayer.cornerRadius = 0
         highlightLayer.masksToBounds = true
         highlightLayer.frame = CGRect(x: 0, y: 0, width: 300, height: 1) // 初始 frame，layout 时更新
         layer?.insertSublayer(highlightLayer, above: gradientLayer)
+        applySurfaceColors()
 
         // 类型图标
         iconView.translatesAutoresizingMaskIntoConstraints = false
@@ -171,6 +167,28 @@ final class ContentCardView: NSView {
         gradientLayer.frame = bounds
         // 高光线只显示顶部 1pt
         highlightLayer.frame = CGRect(x: 0, y: 0, width: bounds.width, height: 1)
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        applySurfaceColors()
+    }
+
+    /// 应用表面颜色（渐变 + 高光线），动态适配浅色/深色模式
+    private func applySurfaceColors() {
+        let topColor = NXDynamicColor(
+            light: NSColor(white: 1.0, alpha: 1.0),
+            dark: NSColor(red: 0.173, green: 0.173, blue: 0.180, alpha: 1.0)
+        )
+        let bottomColor = NXDynamicColor(
+            light: NSColor(white: 0.92, alpha: 1.0),
+            dark: NSColor(red: 0.141, green: 0.141, blue: 0.149, alpha: 1.0)
+        )
+        gradientLayer.colors = [topColor.cgColor, bottomColor.cgColor]
+        highlightLayer.backgroundColor = NXDynamicColor(
+            light: NSColor.white.withAlphaComponent(0.5),
+            dark: NSColor.white.withAlphaComponent(0.06)
+        ).cgColor
     }
 
     // MARK: - 跟踪区域

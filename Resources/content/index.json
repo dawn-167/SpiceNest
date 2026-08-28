@@ -247,6 +247,7 @@
       "id": "error-time-step-too-small",
       "type": "error",
       "title": "Time step too small",
+      "errorPattern": "Time step too small",
       "chineseTitle": "时间步长过小",
       "summary": "仿真器不断减小时间步长仍无法收敛，达到下限",
       "tags": [
@@ -272,6 +273,7 @@
       "id": "error-singular-matrix",
       "type": "error",
       "title": "Singular matrix",
+      "errorPattern": "Singular matrix",
       "chineseTitle": "奇异矩阵",
       "summary": "电路矩阵奇异，通常是节点悬空或存在理想电压源环路",
       "tags": [
@@ -296,6 +298,7 @@
       "id": "error-node-is-floating",
       "type": "error",
       "title": "Node ... is floating",
+      "errorPattern": "Node ... is floating",
       "chineseTitle": "节点悬空",
       "summary": "某个节点没有直流通路到地，电压无法确定",
       "tags": [
@@ -318,6 +321,7 @@
       "id": "error-unknown-parameter",
       "type": "error",
       "title": "Unknown parameter",
+      "errorPattern": "Unknown parameter",
       "chineseTitle": "未知参数",
       "summary": ".model 或元器件属性中使用了不认识的参数名",
       "tags": [
@@ -338,6 +342,7 @@
       "id": "error-unknown-device",
       "type": "error",
       "title": "Unknown device",
+      "errorPattern": "Unknown device",
       "chineseTitle": "未知器件",
       "summary": "元器件引用了未定义的模型或子电路",
       "tags": [
@@ -359,6 +364,7 @@
       "id": "error-gmin-step-failed",
       "type": "error",
       "title": "Gmin step failed",
+      "errorPattern": "Gmin step failed",
       "chineseTitle": "Gmin步进失败",
       "summary": "直流工作点分析中，通过增加最小电导仍无法收敛",
       "tags": [
@@ -383,6 +389,7 @@
       "id": "error-source-stepping-failed",
       "type": "error",
       "title": "Source stepping failed",
+      "errorPattern": "Source stepping failed",
       "chineseTitle": "源步进失败",
       "summary": "直流工作点分析中，通过逐渐增加源电压仍无法收敛",
       "tags": [
@@ -407,6 +414,7 @@
       "id": "error-iteration-limit-reached",
       "type": "error",
       "title": "Iteration limit reached",
+      "errorPattern": "Iteration limit reached",
       "chineseTitle": "迭代次数超限",
       "summary": "牛顿-拉夫逊迭代达到上限仍未收敛",
       "tags": [
@@ -431,6 +439,7 @@
       "id": "error-duplicate-device-name",
       "type": "error",
       "title": "Duplicate device name",
+      "errorPattern": "Duplicate device name",
       "chineseTitle": "器件名重复",
       "summary": "原理图中存在两个相同名称的元器件",
       "tags": [
@@ -451,6 +460,7 @@
       "id": "error-syntax-error",
       "type": "error",
       "title": "Syntax error",
+      "errorPattern": "Syntax error",
       "chineseTitle": "语法错误",
       "summary": "SPICE 网表或指令中存在语法错误",
       "tags": [

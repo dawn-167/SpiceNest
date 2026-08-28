@@ -67,6 +67,10 @@ else:
         if len(summary) > 40:
             errors.append(f"{item_id}: summary 过长 ({len(summary)} > 40): {summary}")
 
+        # error 类型必须带 errorPattern（粘贴报错直达搜索依赖）
+        if item_type == 'error' and not item.get('errorPattern'):
+            errors.append(f"{item_id}: error 类型缺少 errorPattern 字段")
+
         all_items.append(item)
 
 # 3. 校验 related 死链
@@ -103,6 +107,7 @@ if os.path.exists(errors_path):
     with open(errors_path) as f:
         error_details = json.load(f)
     print(f"错误详情: {len(error_details)} 条")
+    index_patterns = {i.get('id'): i.get('errorPattern') for i in all_items}
     for err in error_details:
         err_id = err.get('id', '')
         if not err_id:
@@ -114,6 +119,9 @@ if os.path.exists(errors_path):
         for field in ['errorPattern', 'category', 'cause', 'solutions', 'copyableCommands', 'related']:
             if field not in err:
                 errors.append(f"{err_id}: 缺少字段 {field}")
+        # errorPattern 必须与 index.json 一致（搜索索引与详情不能脱节）
+        if err_id in index_patterns and index_patterns[err_id] != err.get('errorPattern'):
+            errors.append(f"{err_id}: errorPattern 不一致 (index={index_patterns[err_id]!r}, detail={err.get('errorPattern')!r})")
 
 # 6. 输出结果
 print("")

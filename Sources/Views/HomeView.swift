@@ -12,11 +12,20 @@ final class HomeView: NSView {
     /// 按下回车键回调
     var onSearchEnter: ((String) -> Void)?
 
+    /// 按下 Esc 键回调
+    var onEscape: (() -> Void)?
+
     /// 点击快速分类回调
     var onCategoryClick: ((ContentType) -> Void)?
 
     /// 点击收藏卡片回调
     var onFavoriteItemClick: ((ContentItem) -> Void)?
+
+    /// 收藏卡片复制按钮回调
+    var onFavoriteItemCopy: ((ContentItem) -> Void)?
+
+    /// 点击最近查看条目回调
+    var onRecentItemClick: ((ContentItem) -> Void)?
 
     // MARK: - 属性
 
@@ -33,7 +42,8 @@ final class HomeView: NSView {
     private let favoritesScrollView = NSScrollView()
     private let favoritesStackView = NSStackView()
     private var favoriteCardViews: [ContentCardView] = []
-    private var categoryTypes: [ContentType] = []
+    private let recentsLabel = NSTextField(labelWithString: "")
+    private let recentsStackView = NSStackView()
 
     // MARK: - 初始化
 
@@ -108,6 +118,9 @@ final class HomeView: NSView {
         searchField.onEnter = { [weak self] text in
             self?.onSearchEnter?(text)
         }
+        searchField.onEscape = { [weak self] in
+            self?.onEscape?()
+        }
         addSubview(searchField)
 
         // 快速分类标签（3 行 2 列胶囊，P-029）
@@ -140,7 +153,6 @@ final class HomeView: NSView {
                 tag.contentType = type
                 tag.isEnabled = enabled
                 tag.translatesAutoresizingMaskIntoConstraints = false
-                categoryTypes.append(type)
 
                 tag.onClick = { [weak self] in
                     self?.categoryClicked(type: type)
@@ -207,6 +219,21 @@ final class HomeView: NSView {
         favoritesStackView.alignment = .top
         favoritesScrollView.documentView = favoritesStackView
 
+        // 最近查看区（紧凑胶囊行，填充收藏区下方空白，P-049）
+        recentsLabel.translatesAutoresizingMaskIntoConstraints = false
+        recentsLabel.stringValue = "最近查看"
+        recentsLabel.font = NSFont.systemFont(ofSize: 13, weight: .semibold)
+        recentsLabel.textColor = .secondaryLabelColor
+        recentsLabel.isHidden = true
+        addSubview(recentsLabel)
+
+        recentsStackView.translatesAutoresizingMaskIntoConstraints = false
+        recentsStackView.orientation = .horizontal
+        recentsStackView.spacing = 8
+        recentsStackView.alignment = .centerY
+        recentsStackView.isHidden = true
+        addSubview(recentsStackView)
+
         setupConstraints()
     }
 
@@ -268,7 +295,14 @@ final class HomeView: NSView {
             favoritesStackView.trailingAnchor.constraint(equalTo: favoritesScrollView.trailingAnchor),
             favoritesStackView.topAnchor.constraint(equalTo: favoritesScrollView.topAnchor),
             favoritesStackView.bottomAnchor.constraint(equalTo: favoritesScrollView.bottomAnchor),
-            favoritesStackView.heightAnchor.constraint(equalTo: favoritesScrollView.heightAnchor)
+            favoritesStackView.heightAnchor.constraint(equalTo: favoritesScrollView.heightAnchor),
+
+            recentsLabel.topAnchor.constraint(equalTo: favoritesScrollView.bottomAnchor, constant: 16),
+            recentsLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
+
+            recentsStackView.topAnchor.constraint(equalTo: recentsLabel.bottomAnchor, constant: 8),
+            recentsStackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
+            recentsStackView.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -20)
         ])
     }
 
@@ -311,6 +345,9 @@ final class HomeView: NSView {
             card.onClick = { [weak self] item in
                 self?.onFavoriteItemClick?(item)
             }
+            card.onCopy = { [weak self] item in
+                self?.onFavoriteItemCopy?(item)
+            }
             favoritesStackView.addArrangedSubview(card)
             NSLayoutConstraint.activate([
                 card.widthAnchor.constraint(equalToConstant: 160),
@@ -320,9 +357,128 @@ final class HomeView: NSView {
         }
     }
 
+    /// 更新最近查看列表（紧凑胶囊行，P-049）
+    func updateRecents(_ items: [ContentItem]) {
+        for view in recentsStackView.arrangedSubviews {
+            recentsStackView.removeArrangedSubview(view)
+            view.removeFromSuperview()
+        }
+
+        let isEmpty = items.isEmpty
+        recentsLabel.isHidden = isEmpty
+        recentsStackView.isHidden = isEmpty
+        guard !isEmpty else { return }
+
+        for item in items {
+            let chip = RecentChipView(item: item)
+            chip.onClick = { [weak self] in
+                self?.onRecentItemClick?(item)
+            }
+            recentsStackView.addArrangedSubview(chip)
+        }
+    }
+
     // MARK: - 动作
 
     private func categoryClicked(type: ContentType) {
         onCategoryClick?(type)
+    }
+}
+
+// MARK: - 最近查看胶囊
+
+/// 最近查看条目的紧凑胶囊：类型色圆点 + 标题，点击直达详情
+private final class RecentChipView: NSView {
+    var onClick: (() -> Void)?
+
+    private let item: ContentItem
+    private var trackingArea: NSTrackingArea?
+
+    init(item: ContentItem) {
+        self.item = item
+        super.init(frame: .zero)
+        setupUI()
+        setupTrackingArea()
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    private func setupUI() {
+        wantsLayer = true
+        layer?.cornerRadius = 12
+        layer?.borderWidth = 1
+        applyColors(hovering: false)
+
+        let dot = NSView()
+        dot.translatesAutoresizingMaskIntoConstraints = false
+        dot.wantsLayer = true
+        dot.layer?.cornerRadius = 3
+        dot.layer?.backgroundColor = item.type.color.cgColor
+        addSubview(dot)
+
+        let label = NSTextField(labelWithString: item.title)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = NSFont.systemFont(ofSize: 11, weight: .medium)
+        label.textColor = .labelColor
+        label.lineBreakMode = .byTruncatingTail
+        addSubview(label)
+
+        NSLayoutConstraint.activate([
+            heightAnchor.constraint(equalToConstant: 24),
+
+            dot.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 10),
+            dot.centerYAnchor.constraint(equalTo: centerYAnchor),
+            dot.widthAnchor.constraint(equalToConstant: 6),
+            dot.heightAnchor.constraint(equalToConstant: 6),
+
+            label.leadingAnchor.constraint(equalTo: dot.trailingAnchor, constant: 6),
+            label.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -10),
+            label.centerYAnchor.constraint(equalTo: centerYAnchor),
+            label.widthAnchor.constraint(lessThanOrEqualToConstant: 120)
+        ])
+    }
+
+    private func applyColors(hovering: Bool) {
+        let alpha: CGFloat = hovering ? 0.2 : 0.1
+        layer?.backgroundColor = item.type.color.withAlphaComponent(alpha).cgColor
+        layer?.borderColor = item.type.color.withAlphaComponent(hovering ? 0.5 : 0.25).cgColor
+    }
+
+    private func setupTrackingArea() {
+        let area = NSTrackingArea(
+            rect: bounds,
+            options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+            owner: self,
+            userInfo: nil
+        )
+        addTrackingArea(area)
+        trackingArea = area
+    }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let area = trackingArea {
+            removeTrackingArea(area)
+        }
+        setupTrackingArea()
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        applyColors(hovering: true)
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        applyColors(hovering: false)
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        super.mouseUp(with: event)
+        onClick?()
+    }
+
+    override func resetCursorRects() {
+        addCursorRect(bounds, cursor: .pointingHand)
     }
 }

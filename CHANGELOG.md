@@ -5,6 +5,28 @@ All notable changes to SpiceNest will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-08-28
+
+### Added
+- 最近查看：首页收藏区下方紧凑胶囊行，记录最近 8 条查看（UserDefaults 持久化、去重置顶），点击直达详情
+- 粘贴报错直达搜索：内容索引新增 `errorPattern` 字段（10 条错误补齐），粘贴 "Node N005 is floating" 可命中 "Node ... is floating"
+- 搜索回归用例支持 `!id` 反向断言（结果不应包含该条），新增 8 条用例（共 41 条）
+- 内容校验新增：error 类型必须带 errorPattern、index.json 与详情文件 errorPattern 一致性检查
+- `NXDynamicColor(light:dark:)` 动态色工具（CommonViews）
+
+### Fixed
+- P-042：收藏卡片复制按钮点了没反应（回调未接线）
+- P-043："查快捷键"硬编码 `/Applications/KeyHub.app` → 改 `NXURLScheme` 检测与唤起，未安装 KeyHub 时隐藏按钮
+- P-044：Esc 只在搜索页生效 → 首页 Esc 隐藏窗口，详情页 Esc 返回
+- P-045："tran" 误命中 ".dc" 的 transfer 标签 → ASCII 词边界匹配（".op" 也不再误命中 ".options"）
+- P-047：深色模式下卡片/搜索框硬编码白色刺眼 → 动态色适配，运行时切换外观即时刷新
+- P-048：errorPattern 数据闲置、粘贴报错搜不到 → 双向通配匹配（权重 80）
+
+### Changed
+- P-046：删除死代码 `renderGenericDetail`（DetailView）与 `categoryTypes`（HomeView）
+- 搜索权重表新增 errorPattern = 80（介于标题精确 100 与标题包含 50 之间）
+- 搜索/详情堆栈统一使用 CommonViews 共享的 `FlippedStackView`
+
 ## [1.0.0] - 2026-08-28
 
 ### Added

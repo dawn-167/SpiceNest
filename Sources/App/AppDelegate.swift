@@ -35,16 +35,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var favorites: [String] = []
     private let favoritesKey = "SpiceNestFavorites"
 
+    // 最近查看
+    private var recents: [String] = []
+    private let recentsKey = "SpiceNestRecents"
+    private let recentsLimit = 8
+
     // MARK: - 应用生命周期
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         loadFavorites()
+        loadRecents()
         setupWindow()
         setupStatusItem()
         setupHotKey()
         setupPageCallbacks()
         refreshFavoritesUI()
+        refreshRecentsUI()
         showPage(.home, forceFocus: true)
         showWindow()
     }
@@ -158,6 +165,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         homeView.onFavoriteItemClick = { [weak self] item in
             self?.showDetail(item)
         }
+        homeView.onEscape = { [weak self] in
+            self?.window?.orderOut(nil)
+        }
+        homeView.onFavoriteItemCopy = { [weak self] item in
+            self?.copyItem(item)
+        }
+        homeView.onRecentItemClick = { [weak self] item in
+            self?.showDetail(item)
+        }
 
         // 搜索结果页
         searchResultView.onSearchTextChange = { [weak self] text in
@@ -214,6 +230,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             homeView.focusSearchField()
         } else if page == .searchResults {
             searchResultView.focusSearchField()
+        } else if page == .detail {
+            // 让详情页成为第一响应者，Esc 可触发返回
+            window?.makeFirstResponder(detailView)
         }
     }
 
@@ -272,6 +291,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func showDetail(_ item: ContentItem) {
         currentItem = item
+        recordRecent(item)
 
         // 根据类型加载详情
         var commandDetail: CommandDetail?
@@ -293,8 +313,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         detailView.configure(with: item, commandDetail: commandDetail, errorDetail: errorDetail, relatedItems: relatedItems)
         detailView.setFavorite(favorites.contains(item.id))
-        detailView.onKeyHub = {
-            NSWorkspace.shared.open(URL(fileURLWithPath: "/Applications/KeyHub.app"))
+        // 仅当 KeyHub 已安装时显示"查快捷键"按钮，通过 URL Scheme 唤起（P-043）
+        if NXURLScheme.isAppInstalled(appId: "keyhub") {
+            detailView.onKeyHub = {
+                NXURLScheme.openApp(appId: "keyhub")
+            }
+        } else {
+            detailView.onKeyHub = nil
         }
         if currentPage != .detail {
             pushHistory()
@@ -355,6 +380,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             contentLoader.allItems.first { $0.id == id }
         }
         homeView.updateFavorites(items)
+    }
+
+    // MARK: - 最近查看逻辑
+
+    private func loadRecents() {
+        recents = UserDefaults.standard.stringArray(forKey: recentsKey) ?? []
+    }
+
+    private func saveRecents() {
+        UserDefaults.standard.set(recents, forKey: recentsKey)
+    }
+
+    /// 记录一次查看：去重后置顶，最多保留 recentsLimit 条
+    private func recordRecent(_ item: ContentItem) {
+        recents.removeAll { $0 == item.id }
+        recents.insert(item.id, at: 0)
+        if recents.count > recentsLimit {
+            recents = Array(recents.prefix(recentsLimit))
+        }
+        saveRecents()
+        refreshRecentsUI()
+    }
+
+    /// 刷新首页最近查看列表
+    private func refreshRecentsUI() {
+        let items = recents.compactMap { id in
+            contentLoader.allItems.first { $0.id == id }
+        }
+        homeView.updateRecents(items)
     }
 
     // MARK: - 全局热键

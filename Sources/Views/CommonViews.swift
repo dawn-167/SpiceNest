@@ -1,5 +1,26 @@
 import Cocoa
 
+// MARK: - 顶部对齐的纵向堆栈视图
+
+/// NSScrollView 的 documentView 默认非翻转坐标系，纵向堆栈会从底部排布导致顶部空白。
+/// 使用翻转坐标系让内容从顶部开始排布。详情页短内容时也靠顶对齐。
+final class FlippedStackView: NSStackView {
+    override var isFlipped: Bool { true }
+}
+
+// MARK: - 动态颜色
+
+/// 生成随浅色/深色外观自动切换的颜色
+/// 替代硬编码浅色值，修复深色模式下卡片/搜索框呈刺眼白色的问题（P-024）
+func NXDynamicColor(light: NSColor, dark: NSColor) -> NSColor {
+    return NSColor(name: nil) { appearance in
+        if appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua {
+            return dark
+        }
+        return light
+    }
+}
+
 // MARK: - 分组标题视图
 
 /// 搜索结果分组标题，显示类型图标、类型名和数量

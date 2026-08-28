@@ -61,4 +61,6 @@ struct ContentItem: Codable, Identifiable {
     let preview: String?        // 关键信息预览（语法/公式），搜索结果卡片第三行展示
     let tags: [String]          // 搜索标签（中英文同义词、缩写）
     let related: [String]       // 关联内容的 id 列表
+    /// 错误消息原文模式（仅 error 类型），"..." 为通配符，用于粘贴报错直接匹配
+    let errorPattern: String?
 }

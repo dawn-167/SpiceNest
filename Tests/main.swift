@@ -68,10 +68,16 @@ func runTests() -> Int32 {
         let results = searchService.searchFlat(query: testCase.query)
         let resultIds = results.map { $0.id }
 
-        // 检查所有预期 id 是否都在结果中
+        // 检查所有预期 id 是否都在结果中（"!" 前缀表示该 id 不应出现）
         var allFound = true
         for expectedId in testCase.expectedIds {
-            if !resultIds.contains(expectedId) {
+            if expectedId.hasPrefix("!") {
+                let forbiddenId = String(expectedId.dropFirst())
+                if resultIds.contains(forbiddenId) {
+                    allFound = false
+                    break
+                }
+            } else if !resultIds.contains(expectedId) {
                 allFound = false
                 break
             }

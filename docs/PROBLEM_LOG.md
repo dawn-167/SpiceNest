@@ -1,6 +1,6 @@
 # SpiceNest 问题记录
 
-> 版本：0.2 | 日期：2026-08-28
+> 版本：0.7 | 日期：2026-08-28
 > 用途：记录开发/验证过程中发现的问题（未落地事项、规范偏差、数据问题），跟踪到修复为止。
 > 与 [BUG_LOG.md](BUG_LOG.md) 的区别：BUG_LOG 记录**已按 QA 五步流程处理完的 bug 修复归档**；本文件记录**验证/审阅发现、尚未处理的问题与待办**。
 
@@ -632,6 +632,121 @@
 
 ---
 
+## 四、UI 深度审计专项（2026-08-28 深度审计，v0.7 P0+P1 包）
+
+> 对三页真实截图 + 全量代码逐元素审计：布局合理性、用户使用习惯、每个 UI 元素是否真实被用到、死元素、缺失功能。
+> 经确认本轮落地 P0+P1 两包；明确不做：点击空白收起窗口、锁定分类降权，及其余 P2 审计项。
+
+### P-042：收藏卡片复制按钮是死元素（P1）
+
+- 发现日期：2026-08-28
+- 严重程度：P1
+- 状态：✅ 已解决（2026-08-28 · HomeView 增加 onFavoriteItemCopy，AppDelegate 接 copyItem）
+- 来源：深度审计（元素可用性核查）
+- 现象：收藏卡片悬停出现复制按钮，但 HomeView 只有 onClick 回调，onCopy 从未接线，点击无任何效果
+- 影响：可见按钮点了没反应，用户怀疑应用坏了
+- 修复：[HomeView.swift](../Sources/Views/HomeView.swift) `onFavoriteItemCopy` + [AppDelegate.swift](../Sources/App/AppDelegate.swift) 接线 `copyItem`
+
+---
+
+### P-043："查快捷键"按钮硬编码 KeyHub 路径（P1）
+
+- 发现日期：2026-08-28
+- 严重程度：P1
+- 状态：✅ 已解决（2026-08-28 · 改用 NXURLScheme，未安装时隐藏按钮）
+- 来源：深度审计（元素可用性核查）
+- 现象：详情页按钮直接 `NSWorkspace.open("/Applications/KeyHub.app")`，KeyHub 不在该路径时点击报错；且未安装时也显示按钮
+- 决策：产品确认"未装 KeyHub 就隐藏"
+- 修复：[AppDelegate.swift](../Sources/App/AppDelegate.swift) `NXURLScheme.isAppInstalled(appId: "keyhub")` 判定 + `NXURLScheme.openApp(appId:)` 唤起；未安装时 `detailView.onKeyHub = nil`（DetailView 自动隐藏按钮）
+
+---
+
+### P-044：Esc 只在搜索结果页生效（P1）
+
+- 发现日期：2026-08-28
+- 严重程度：P1
+- 状态：✅ 已解决（2026-08-28 · 首页 Esc 隐藏窗口，详情页 Esc 返回）
+- 来源：深度审计（用户使用习惯：浮窗类工具 Esc 应可收起）
+- 现象：首页按 Esc 无反应；详情页不是第一响应者，Esc 也无效
+- 修复：
+  - [HomeView.swift](../Sources/Views/HomeView.swift) `onEscape` → [AppDelegate.swift](../Sources/App/AppDelegate.swift) `window.orderOut(nil)`
+  - [DetailView.swift](../Sources/Views/DetailView.swift) `acceptsFirstResponder` + `cancelOperation` 触发返回；`showPage(.detail)` 时 `makeFirstResponder(detailView)`
+
+---
+
+### P-045："tran" 误命中 ".dc" 的 transfer 标签（P1）
+
+- 发现日期：2026-08-28
+- 严重程度：P1
+- 状态：✅ 已解决（2026-08-28 · ASCII 词边界匹配 + 反向断言回归用例）
+- 来源：深度审计（搜索质量）
+- 现象：搜索 "tran" 会把 ".dc"（tags 含 "transfer"）一并搜出，纯子串匹配的误报
+- 修复：[SearchService.swift](../Sources/Services/SearchService.swift) 纯 ASCII 查询改词边界匹配（命中处前后不得紧邻 ASCII 字母/数字；中文/混合查询保持子串匹配）；"tran" 不再命中 "transfer"，".op" 不再命中 ".options"，完整单词与中文搜索不受影响
+- 验证：`scripts/search_cases.txt` 新增 `!id` 反向断言语法与 4 条词边界用例
+
+---
+
+### P-046：死代码 renderGenericDetail / categoryTypes（P2）
+
+- 发现日期：2026-08-28
+- 严重程度：P2
+- 状态：✅ 已解决（2026-08-28 · 直接删除）
+- 来源：深度审计（未被使用的元素/代码）
+- 现象：`DetailView.renderGenericDetail` 无任何调用方；`HomeView.categoryTypes` 只写不读
+- 修复：两处删除
+
+---
+
+### P-047：深色模式下卡片/搜索框硬编码白色（P0）
+
+- 发现日期：2026-08-28
+- 严重程度：**P0**
+- 状态：✅ 已解决（2026-08-28 · NXDynamicColor 动态色 + 外观切换刷新）
+- 来源：深度审计（深色模式实测）
+- 现象：ContentCardView / SearchFieldView 渐变背景写死 `NSColor(white: 1.0)` 系浅色，深色模式下呈刺眼白色块（P-024 的卡片部分）
+- 修复：
+  - [CommonViews.swift](../Sources/Views/CommonViews.swift) 新增 `NXDynamicColor(light:dark:)` 动态色工具
+  - 卡片渐变浅白→深灰（#2C2C2E→#242426），高光线深色下降为 alpha 0.06；搜索框渐变同步动态化
+  - `viewDidChangeEffectiveAppearance` 运行时切换外观即时刷新
+- 验证：深色模式全页截图（首页/搜索/详情）目视通过
+
+---
+
+### P-048：粘贴报错无法反查，errorPattern 数据闲置（P1）
+
+- 发现日期：2026-08-28
+- 严重程度：P1
+- 状态：✅ 已解决（2026-08-28 · errorPattern 进索引 + 双向通配匹配，权重 80）
+- 来源：深度审计（缺失但用户需要的功能）
+- 现象：common-errors.json 每条都有 `errorPattern`（如 "Node ... is floating"），但 index.json 无此字段、搜索从不使用；用户粘贴真实报错 "Node N005 is floating" 搜不到对应条目
+- 修复：
+  - [ContentItem.swift](../Sources/Models/ContentItem.swift) 增加 `errorPattern: String?`；index.json 10 条错误补齐
+  - [SearchService.swift](../Sources/Services/SearchService.swift) 双向匹配："..." 通配展开正向命中粘贴文本；压平后反向命中简写输入
+  - `validate_content.sh` 增加 error 类型必有 errorPattern + index/详情一致性校验
+
+---
+
+### P-049：首页收藏区下方约 138pt 空白，缺"最近查看"（P1）
+
+- 发现日期：2026-08-28
+- 严重程度：P1
+- 状态：✅ 已解决（2026-08-28 · 最近查看胶囊行）
+- 来源：深度审计（布局合理性 + 架构文档承诺未兑现）
+- 现象：首页底部大片空白；架构文档承诺的"最近查看/搜索历史"从未实现
+- 修复：
+  - [AppDelegate.swift](../Sources/App/AppDelegate.swift) `SpiceNestRecents` UserDefaults 持久化，去重置顶，上限 8 条，`showDetail` 时记录
+  - [HomeView.swift](../Sources/Views/HomeView.swift) 收藏区下方"最近查看"紧凑胶囊行（类型色圆点 + 标题，悬停加深，点击直达详情），无记录时整区隐藏
+
+---
+
+### 本轮明确不做（用户确认）
+
+- 点击窗口外收起（涉及全局事件监听，体验收益有限）
+- 锁定分类（参数/公式/技巧/拓扑）降权或后移（保持信息架构完整）
+- 其余 P2 审计项（80ms 悬停定时器、空状态尺寸等）留待后续
+
+---
+
 ## 本次验证通过项（无需处理）
 
 | 项 | 结论 |
@@ -660,12 +775,13 @@
 
 | 严重程度 | 总数 | 待处理 | 处理中 | 已解决 |
 |---------|------|--------|--------|--------|
-| P0 | 10 | 0 | 0 | 10 |
-| P1 | 16 | 1 | 0 | 15 |
-| P2 | 17 | 8 | 0 | 9 |
+| P0 | 11 | 0 | 0 | 11 |
+| P1 | 22 | 1 | 0 | 21 |
+| P2 | 18 | 8 | 0 | 10 |
 | P3 | 1 | 0 | 0 | 1 |
-| **合计** | **44** | **9** | **0** | **35** |
+| **合计** | **52** | **9** | **0** | **43** |
 
+> v0.7（2026-08-28）：UI 深度审计，落地 P0+P1 两包共 8 项（P-042~P-049）：死元素修复/KeyHub 唤起方式/全页 Esc/词边界搜索/死代码清理/深色模式动态色/粘贴报错直达/最近查看
 > v0.6（2026-08-28）：用户实测反馈 6 项交互 bug（P-036~P-041）全部修复：红绿灯重叠/输入覆盖/悬停错位/返回按钮截断+逻辑/搜索页无返回/复制无反馈
 
 ---
@@ -674,6 +790,7 @@
 
 | 版本 | 日期 | 说明 |
 |------|------|------|
+| v0.7 | 2026-08-28 | UI 深度审计专项：新增 P-042~P-049（8 项）全部 ✅，落地 P0+P1 两包（死元素/深色模式/搜索质量/最近查看） |
 | v0.6 | 2026-08-28 | 交互 bug 专项：P-036~P-041 全部 ✅（红绿灯重叠/输入覆盖/悬停错位/返回截断+历史栈/搜索页返回按钮/复制反馈） |
 | v0.5 | 2026-08-28 | UI v2.0 重构完成：P-025~P-035 全部 ✅（背景渐变/Logo/分类胶囊/收藏横向/搜索框/热键/锁徽章/TagView/间距/回顶按钮） |
 | v0.4 | 2026-08-28 | 真实运行截图复核，新增 P-025~P-035（11 项 UI 视觉专项），4 项 P0（背景/Logo/分类/收藏区） |

@@ -59,17 +59,14 @@ final class SearchFieldView: NSView {
         backgroundView.translatesAutoresizingMaskIntoConstraints = false
         backgroundView.wantsLayer = true
         backgroundView.layer?.cornerRadius = 10
-        // 渐变背景（顶亮底暗，增强立体感）
-        gradientLayer.colors = [
-            NSColor(white: 1.0, alpha: 1.0).cgColor,
-            NSColor(white: 0.94, alpha: 1.0).cgColor
-        ]
+        // 渐变背景（顶亮底暗，增强立体感；动态色适配深色模式）
         gradientLayer.startPoint = CGPoint(x: 0, y: 0)
         gradientLayer.endPoint = CGPoint(x: 0, y: 1)
         gradientLayer.cornerRadius = 10
         backgroundView.layer?.insertSublayer(gradientLayer, at: 0)
         backgroundView.layer?.borderWidth = 1
         backgroundView.layer?.borderColor = NSColor.separatorColor.cgColor
+        applySurfaceColors()
         addSubview(backgroundView)
 
         // 左侧放大镜图标
@@ -134,6 +131,26 @@ final class SearchFieldView: NSView {
             clearButton.widthAnchor.constraint(equalToConstant: 20),
             clearButton.heightAnchor.constraint(equalToConstant: 20)
         ])
+    }
+
+    // MARK: - 表面颜色
+
+    /// 应用搜索框渐变背景色，动态适配浅色/深色模式
+    private func applySurfaceColors() {
+        let topColor = NXDynamicColor(
+            light: NSColor(white: 1.0, alpha: 1.0),
+            dark: NSColor(red: 0.192, green: 0.192, blue: 0.200, alpha: 1.0)
+        )
+        let bottomColor = NXDynamicColor(
+            light: NSColor(white: 0.94, alpha: 1.0),
+            dark: NSColor(red: 0.157, green: 0.157, blue: 0.165, alpha: 1.0)
+        )
+        gradientLayer.colors = [topColor.cgColor, bottomColor.cgColor]
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        applySurfaceColors()
     }
 
     // MARK: - 公开方法
