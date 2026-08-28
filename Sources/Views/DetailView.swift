@@ -33,6 +33,7 @@ final class DetailView: NSView {
     private let favoriteButton = NSButton()
     private let copyAllButton = NSButton()
     private let keyhubButton = NSButton()
+    private let scrollToTopButton = NSButton()
 
     private var item: ContentItem?
     private var isFavorite: Bool = false
@@ -76,7 +77,7 @@ final class DetailView: NSView {
         // 内容堆栈视图
         contentStackView.translatesAutoresizingMaskIntoConstraints = false
         contentStackView.orientation = .vertical
-        contentStackView.spacing = 12
+        contentStackView.spacing = 8
         contentStackView.alignment = .leading
         scrollView.documentView = contentStackView
 
@@ -157,6 +158,32 @@ final class DetailView: NSView {
         keyhubButton.contentTintColor = .secondaryLabelColor
         addSubview(keyhubButton)
 
+        // 回顶按钮（P-034）：滚动超过 200pt 时浮现
+        scrollToTopButton.translatesAutoresizingMaskIntoConstraints = false
+        scrollToTopButton.bezelStyle = .rounded
+        scrollToTopButton.isBordered = false
+        let topConfig = NSImage.SymbolConfiguration(pointSize: 14, weight: .semibold)
+        let topIcon = NSImage(systemSymbolName: "arrow.up", accessibilityDescription: "回到顶部")?.withSymbolConfiguration(topConfig)
+        scrollToTopButton.image = topIcon
+        scrollToTopButton.imagePosition = .imageOnly
+        let amber = NSColor(calibratedRed: 1.0, green: 0.584, blue: 0.0, alpha: 1.0)
+        scrollToTopButton.contentTintColor = amber
+        scrollToTopButton.wantsLayer = true
+        scrollToTopButton.layer?.backgroundColor = amber.withAlphaComponent(0.12).cgColor
+        scrollToTopButton.layer?.cornerRadius = 20
+        scrollToTopButton.target = self
+        scrollToTopButton.action = #selector(scrollToTopClicked)
+        scrollToTopButton.isHidden = true
+        addSubview(scrollToTopButton)
+
+        // 监听滚动以控制回顶按钮显隐
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(scrollViewDidScroll),
+            name: NSView.boundsDidChangeNotification,
+            object: scrollView.contentView
+        )
+
         setupConstraints()
     }
 
@@ -164,7 +191,6 @@ final class DetailView: NSView {
         NSLayoutConstraint.activate([
             backButton.topAnchor.constraint(equalTo: topAnchor, constant: 12),
             backButton.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
-            backButton.widthAnchor.constraint(equalToConstant: 32),
             backButton.heightAnchor.constraint(equalToConstant: 28),
 
             scrollView.topAnchor.constraint(equalTo: backButton.bottomAnchor, constant: 8),
@@ -187,7 +213,12 @@ final class DetailView: NSView {
 
             copyAllButton.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -12),
             copyAllButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
-            copyAllButton.heightAnchor.constraint(equalToConstant: 28)
+            copyAllButton.heightAnchor.constraint(equalToConstant: 28),
+
+            scrollToTopButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
+            scrollToTopButton.bottomAnchor.constraint(equalTo: favoriteButton.topAnchor, constant: -12),
+            scrollToTopButton.widthAnchor.constraint(equalToConstant: 40),
+            scrollToTopButton.heightAnchor.constraint(equalToConstant: 40)
         ])
     }
 
@@ -201,7 +232,7 @@ final class DetailView: NSView {
         chineseTitleLabel.stringValue = item.chineseTitle
         typeTag.text = item.type.displayName
         typeTag.textColor = item.type.color
-        typeTag.backgroundColor = item.type.color.withAlphaComponent(0.12)
+        typeTag.backgroundColor = item.type.color.withAlphaComponent(0.20)
         summaryLabel.stringValue = item.summary
 
         // 清空之前的详情内容（保留前 5 个：标题、中文标题、类型标签、摘要、分隔线）
@@ -385,9 +416,43 @@ final class DetailView: NSView {
     @objc private func copyAllClicked() {
         guard let item = item else { return }
         onCopyAll?(item)
+        showCopyFeedback()
+    }
+
+    /// 复制成功后按钮短暂显示"已复制"，让用户明确感知作用
+    private func showCopyFeedback() {
+        let originalTitle = copyAllButton.title
+        copyAllButton.title = "已复制 ✓"
+        copyAllButton.contentTintColor = NSColor.systemGreen
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
+            self?.copyAllButton.title = originalTitle
+            self?.copyAllButton.contentTintColor = .secondaryLabelColor
+        }
     }
 
     @objc private func keyhubClicked() {
         onKeyHub?()
+    }
+
+    @objc private func scrollToTopClicked() {
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.3
+            context.allowsImplicitAnimation = true
+            scrollView.contentView.scroll(to: NSPoint(x: 0, y: 0))
+        }
+        scrollView.reflectScrolledClipView(scrollView.contentView)
+    }
+
+    @objc private func scrollViewDidScroll() {
+        let offsetY = scrollView.contentView.bounds.origin.y
+        let shouldShow = offsetY > 200
+        if scrollToTopButton.isHidden == shouldShow {
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.2
+                context.allowsImplicitAnimation = true
+                scrollToTopButton.alphaValue = shouldShow ? 1.0 : 0.0
+            }
+            scrollToTopButton.isHidden = !shouldShow
+        }
     }
 }

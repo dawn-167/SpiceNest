@@ -83,7 +83,7 @@ final class SearchFieldView: NSView {
         // 文本字段
         textField.translatesAutoresizingMaskIntoConstraints = false
         textField.placeholderString = "搜索指令、参数、报错、公式…"
-        textField.font = NSFont.systemFont(ofSize: 14)
+        textField.font = NSFont.systemFont(ofSize: 13)
         textField.textColor = .labelColor
         textField.backgroundColor = .clear
         textField.bezelStyle = .squareBezel
@@ -119,17 +119,17 @@ final class SearchFieldView: NSView {
             backgroundView.bottomAnchor.constraint(equalTo: bottomAnchor),
             backgroundView.heightAnchor.constraint(equalToConstant: 36),
 
-            iconView.leadingAnchor.constraint(equalTo: backgroundView.leadingAnchor, constant: 12),
+            iconView.leadingAnchor.constraint(equalTo: backgroundView.leadingAnchor, constant: 10),
             iconView.centerYAnchor.constraint(equalTo: backgroundView.centerYAnchor),
             iconView.widthAnchor.constraint(equalToConstant: 16),
             iconView.heightAnchor.constraint(equalToConstant: 16),
 
-            textField.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: 8),
-            textField.trailingAnchor.constraint(equalTo: clearButton.leadingAnchor, constant: -8),
+            textField.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: 6),
+            textField.trailingAnchor.constraint(equalTo: clearButton.leadingAnchor, constant: -6),
             textField.centerYAnchor.constraint(equalTo: backgroundView.centerYAnchor),
             textField.heightAnchor.constraint(equalToConstant: 22),
 
-            clearButton.trailingAnchor.constraint(equalTo: backgroundView.trailingAnchor, constant: -8),
+            clearButton.trailingAnchor.constraint(equalTo: backgroundView.trailingAnchor, constant: -6),
             clearButton.centerYAnchor.constraint(equalTo: backgroundView.centerYAnchor),
             clearButton.widthAnchor.constraint(equalToConstant: 20),
             clearButton.heightAnchor.constraint(equalToConstant: 20)
@@ -141,6 +141,17 @@ final class SearchFieldView: NSView {
     /// 聚焦搜索框
     func focus() {
         window?.makeFirstResponder(textField)
+        // 光标移到末尾而非全选，避免页面切换后下一次输入覆盖已有文本
+        moveCursorToEnd()
+        // field editor 可能尚未就绪，下一轮 runloop 再确认一次
+        DispatchQueue.main.async { [weak self] in
+            self?.moveCursorToEnd()
+        }
+    }
+
+    private func moveCursorToEnd() {
+        guard let editor = textField.currentEditor() else { return }
+        editor.selectedRange = NSRange(location: (editor.string as NSString).length, length: 0)
     }
 
     override func layout() {

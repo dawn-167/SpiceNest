@@ -1,5 +1,13 @@
 import Cocoa
 
+// MARK: - 顶部对齐的纵向堆栈视图
+
+/// NSScrollView 的 documentView 默认非翻转坐标系，纵向堆栈会从底部排布导致顶部空白。
+/// 使用翻转坐标系让内容从顶部开始排布。
+private final class FlippedStackView: NSStackView {
+    override var isFlipped: Bool { true }
+}
+
 // MARK: - 搜索结果页视图
 
 /// 搜索结果页：顶部搜索框 + 按类型分组的结果列表 + 空状态 + 键盘选择
@@ -21,11 +29,15 @@ final class SearchResultView: NSView {
     /// 点击复制按钮回调
     var onItemCopy: ((ContentItem) -> Void)?
 
+    /// 点击返回按钮回调
+    var onBack: (() -> Void)?
+
     // MARK: - 属性
 
+    private let backButton = NSButton()
     private let searchField = SearchFieldView()
     private let scrollView = NSScrollView()
-    private let stackView = NSStackView()
+    private let stackView = FlippedStackView()
     private let emptyState = EmptyStateView()
 
     private var results: [ContentType: [ContentItem]] = [:]
@@ -49,6 +61,17 @@ final class SearchResultView: NSView {
 
     private func setupUI() {
         wantsLayer = true
+
+        // 返回按钮（与搜索框同行，左侧）
+        backButton.translatesAutoresizingMaskIntoConstraints = false
+        backButton.bezelStyle = .rounded
+        backButton.isBordered = false
+        backButton.title = "‹ 返回"
+        backButton.font = NSFont.systemFont(ofSize: 13, weight: .medium)
+        backButton.target = self
+        backButton.action = #selector(backClicked)
+        backButton.contentTintColor = .labelColor
+        addSubview(backButton)
 
         // 搜索框
         searchField.translatesAutoresizingMaskIntoConstraints = false
@@ -86,6 +109,8 @@ final class SearchResultView: NSView {
         stackView.orientation = .vertical
         stackView.spacing = 0
         stackView.alignment = .leading
+        // 顶部留白，避免分组标题紧贴搜索框
+        stackView.edgeInsets = NSEdgeInsets(top: 8, left: 0, bottom: 0, right: 0)
         scrollView.documentView = stackView
 
         // 空状态
@@ -100,12 +125,16 @@ final class SearchResultView: NSView {
 
     private func setupConstraints() {
         NSLayoutConstraint.activate([
+            backButton.topAnchor.constraint(equalTo: topAnchor, constant: 12),
+            backButton.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
+            backButton.heightAnchor.constraint(equalToConstant: 36),
+
             searchField.topAnchor.constraint(equalTo: topAnchor, constant: 12),
-            searchField.leadingAnchor.constraint(equalTo: leadingAnchor),
-            searchField.trailingAnchor.constraint(equalTo: trailingAnchor),
+            searchField.leadingAnchor.constraint(equalTo: backButton.trailingAnchor, constant: 8),
+            searchField.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
             searchField.heightAnchor.constraint(equalToConstant: 36),
 
-            scrollView.topAnchor.constraint(equalTo: searchField.bottomAnchor, constant: 8),
+            scrollView.topAnchor.constraint(equalTo: searchField.bottomAnchor, constant: 0),
             scrollView.leadingAnchor.constraint(equalTo: leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: bottomAnchor),
@@ -149,8 +178,10 @@ final class SearchResultView: NSView {
             startHoverTimer()
         }
 
-        // 更新搜索框文本
-        searchField.text = query
+        // 更新搜索框文本（仅在内容不一致时写入，避免打断正在输入的光标/选中态）
+        if searchField.text != query {
+            searchField.text = query
+        }
     }
 
     /// 聚焦搜索框
@@ -267,7 +298,8 @@ final class SearchResultView: NSView {
         }
 
         let mouseLocation = NSEvent.mouseLocation
-        let localPoint = convert(mouseLocation, from: nil)
+        // 卡片 frame 在 stackView（documentView）坐标系中，鼠标坐标必须转换到同一坐标系
+        let localPoint = stackView.convert(mouseLocation, from: nil)
 
         for (index, card) in cardViews.enumerated() {
             // 键盘选中的卡片保持高亮，不被悬停逻辑覆盖
@@ -280,6 +312,10 @@ final class SearchResultView: NSView {
             let isHovering = cardFrame.contains(localPoint)
             card.applyHoverState(isHovering)
         }
+    }
+
+    @objc private func backClicked() {
+        onBack?()
     }
 
     deinit {

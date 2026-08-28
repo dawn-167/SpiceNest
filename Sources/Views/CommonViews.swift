@@ -103,15 +103,21 @@ final class SeparatorView: NSView {
 // MARK: - 标签视图
 
 /// 小型标签，用于显示内容类型等
+/// P-035：左侧类型色色块 + 更深背景 + semibold，增强识别度
 final class TagView: NSView {
     private let label = NSTextField(labelWithString: "")
+    private let colorBlock = NSView()
 
     var text: String = "" {
         didSet { label.stringValue = text }
     }
 
     var textColor: NSColor = .labelColor {
-        didSet { label.textColor = textColor }
+        didSet {
+            label.textColor = textColor
+            colorBlock.wantsLayer = true
+            colorBlock.layer?.backgroundColor = textColor.cgColor
+        }
     }
 
     var backgroundColor: NSColor = .controlBackgroundColor {
@@ -129,20 +135,31 @@ final class TagView: NSView {
 
     private func setupUI() {
         wantsLayer = true
-        layer?.cornerRadius = 4
+        layer?.cornerRadius = 5
         layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
 
-        label.font = NSFont.systemFont(ofSize: 10, weight: .medium)
+        // 左侧类型色色块
+        colorBlock.translatesAutoresizingMaskIntoConstraints = false
+        colorBlock.wantsLayer = true
+        colorBlock.layer?.cornerRadius = 2
+        addSubview(colorBlock)
+
+        label.font = NSFont.systemFont(ofSize: 11, weight: .semibold)
         label.textColor = .secondaryLabelColor
         label.alignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
         addSubview(label)
 
         NSLayoutConstraint.activate([
-            label.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 6),
-            label.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -6),
-            label.topAnchor.constraint(equalTo: topAnchor, constant: 2),
-            label.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -2)
+            colorBlock.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 7),
+            colorBlock.centerYAnchor.constraint(equalTo: centerYAnchor),
+            colorBlock.widthAnchor.constraint(equalToConstant: 4),
+            colorBlock.heightAnchor.constraint(equalToConstant: 14),
+
+            label.leadingAnchor.constraint(equalTo: colorBlock.trailingAnchor, constant: 6),
+            label.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -7),
+            label.topAnchor.constraint(equalTo: topAnchor, constant: 3),
+            label.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -3)
         ])
     }
 }

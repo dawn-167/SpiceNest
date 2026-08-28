@@ -2,7 +2,8 @@ import Cocoa
 
 // MARK: - 分类标签视图
 
-/// 自定义分类标签，支持默认/悬停/按下/选中/禁用状态
+/// 自定义分类标签：类型图标 + 文字 + 锁徽章（P-029 / P-033）
+/// 支持默认（类型色描边）/悬停（类型色浅填充）/按下/选中/禁用（灰字+锁）状态
 final class CategoryTagView: NSView {
     // MARK: - 回调
 
@@ -11,12 +12,28 @@ final class CategoryTagView: NSView {
 
     // MARK: - 属性
 
+    private let iconView = NSImageView()
     private let label = NSTextField(labelWithString: "")
+    private let lockView = NSImageView()
     private var trackingArea: NSTrackingArea?
+
+    /// 类型主题色
+    private var typeColor: NSColor = NSColor(calibratedRed: 1.0, green: 0.584, blue: 0.0, alpha: 1.0)
 
     /// 标签文字
     var text: String = "" {
         didSet { label.stringValue = text }
+    }
+
+    /// 内容类型（决定图标与主题色）
+    var contentType: ContentType? {
+        didSet {
+            guard let type = contentType else { return }
+            let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
+            iconView.image = NSImage(systemSymbolName: type.iconName, accessibilityDescription: nil)?.withSymbolConfiguration(config)
+            typeColor = type.color
+            updateStyle()
+        }
     }
 
     /// 是否启用
@@ -50,19 +67,45 @@ final class CategoryTagView: NSView {
 
     private func setupUI() {
         wantsLayer = true
-        layer?.cornerRadius = 6
-        layer?.borderWidth = 0
+        layer?.cornerRadius = 15
+        layer?.borderWidth = 1
+        layer?.borderColor = NSColor.clear.cgColor
 
+        // 类型图标
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+        iconView.imageScaling = .scaleProportionallyUpOrDown
+        addSubview(iconView)
+
+        // 文字
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.font = NSFont.systemFont(ofSize: 11, weight: .medium)
+        label.font = NSFont.systemFont(ofSize: 12, weight: .medium)
         label.alignment = .center
         addSubview(label)
 
+        // 锁徽章（禁用态显示，P-033）
+        lockView.translatesAutoresizingMaskIntoConstraints = false
+        let lockConfig = NSImage.SymbolConfiguration(pointSize: 9, weight: .medium)
+        lockView.image = NSImage(systemSymbolName: "lock.fill", accessibilityDescription: nil)?.withSymbolConfiguration(lockConfig)
+        lockView.contentTintColor = .tertiaryLabelColor
+        lockView.isHidden = true
+        addSubview(lockView)
+
         NSLayoutConstraint.activate([
-            label.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 10),
-            label.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -10),
-            label.topAnchor.constraint(equalTo: topAnchor, constant: 4),
-            label.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -4)
+            heightAnchor.constraint(equalToConstant: 30),
+
+            iconView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
+            iconView.centerYAnchor.constraint(equalTo: centerYAnchor),
+            iconView.widthAnchor.constraint(equalToConstant: 14),
+            iconView.heightAnchor.constraint(equalToConstant: 14),
+
+            label.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: 6),
+            label.centerYAnchor.constraint(equalTo: centerYAnchor),
+
+            lockView.leadingAnchor.constraint(equalTo: label.trailingAnchor, constant: 6),
+            lockView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12),
+            lockView.centerYAnchor.constraint(equalTo: centerYAnchor),
+            lockView.widthAnchor.constraint(equalToConstant: 10),
+            lockView.heightAnchor.constraint(equalToConstant: 10)
         ])
 
         updateStyle()
@@ -90,34 +133,39 @@ final class CategoryTagView: NSView {
     // MARK: - 样式更新
 
     private func updateStyle() {
-        let amber = NSColor(calibratedRed: 1.0, green: 0.584, blue: 0.0, alpha: 1.0)
-
         if !isEnabled {
-            // 禁用态：次文字色，可视但不可点
+            // 禁用态：无描边无填充，灰字 + 锁徽章
             layer?.backgroundColor = NSColor.clear.cgColor
+            layer?.borderColor = NSColor.clear.cgColor
+            layer?.borderWidth = 1
             label.textColor = .tertiaryLabelColor
-            layer?.shadowOpacity = 0
-        } else if isSelected {
-            // 选中态：琥珀色背景 alpha 0.12，文字琥珀色，发光效果
-            layer?.backgroundColor = amber.withAlphaComponent(0.12).cgColor
-            label.textColor = amber
-            layer?.shadowColor = amber.cgColor
-            layer?.shadowOpacity = 0.25
-            layer?.shadowRadius = 6
-            layer?.shadowOffset = CGSize(width: 0, height: 0)
-        } else if isHovering {
-            // 悬停态：琥珀色背景 alpha 0.08，文字琥珀色，轻微发光
-            layer?.backgroundColor = amber.withAlphaComponent(0.08).cgColor
-            label.textColor = amber
-            layer?.shadowColor = amber.cgColor
-            layer?.shadowOpacity = 0.15
-            layer?.shadowRadius = 4
-            layer?.shadowOffset = CGSize(width: 0, height: 0)
+            iconView.contentTintColor = .tertiaryLabelColor
+            lockView.isHidden = false
+            toolTip = "第二阶段上线"
         } else {
-            // 默认态：透明背景，次文字色
-            layer?.backgroundColor = NSColor.clear.cgColor
-            label.textColor = .secondaryLabelColor
-            layer?.shadowOpacity = 0
+            lockView.isHidden = true
+            toolTip = nil
+            iconView.contentTintColor = typeColor
+
+            if isSelected {
+                // 选中态：类型色填充 0.20 + 1.5pt 描边
+                layer?.backgroundColor = typeColor.withAlphaComponent(0.20).cgColor
+                layer?.borderColor = typeColor.withAlphaComponent(0.8).cgColor
+                layer?.borderWidth = 1.5
+                label.textColor = typeColor
+            } else if isHovering {
+                // 悬停态：类型色填充 0.12 + 文字变类型色
+                layer?.backgroundColor = typeColor.withAlphaComponent(0.12).cgColor
+                layer?.borderColor = typeColor.withAlphaComponent(0.6).cgColor
+                layer?.borderWidth = 1
+                label.textColor = typeColor
+            } else {
+                // 默认态：透明底 + 1pt 类型色描边，看起来像可点的胶囊
+                layer?.backgroundColor = NSColor.clear.cgColor
+                layer?.borderColor = typeColor.withAlphaComponent(0.35).cgColor
+                layer?.borderWidth = 1
+                label.textColor = .secondaryLabelColor
+            }
         }
     }
 
@@ -134,9 +182,8 @@ final class CategoryTagView: NSView {
 
     override func mouseDown(with event: NSEvent) {
         guard isEnabled else { return }
-        // 按下态：稍微加深背景
-        let amber = NSColor(calibratedRed: 1.0, green: 0.584, blue: 0.0, alpha: 1.0)
-        layer?.backgroundColor = amber.withAlphaComponent(0.18).cgColor
+        // 按下态：加深填充
+        layer?.backgroundColor = typeColor.withAlphaComponent(0.20).cgColor
     }
 
     override func mouseUp(with event: NSEvent) {

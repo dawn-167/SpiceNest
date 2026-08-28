@@ -45,7 +45,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setupHotKey()
         setupPageCallbacks()
         refreshFavoritesUI()
-        showPage(.home)
+        showPage(.home, forceFocus: true)
         showWindow()
     }
 
@@ -73,6 +73,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 if let id = result.params["id"], let item = contentLoader.allItems.first(where: { $0.id == id }) {
                     showDetail(item)
                 }
+            case "home":
+                showPage(.home, forceFocus: true)
+            case "snapshot":
+                exportSnapshot()
             default:
                 break
             }
@@ -85,13 +89,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let win = NXWindowStyle.makeFloatingWindow(
             size: NSSize(width: 560, height: 640),
             title: "SpiceNest",
-            tintColor: NSColor(red: 1.0, green: 0.584, blue: 0.0, alpha: 0.12),
+            // 传入透明，避免纯色叠加与毛玻璃底色混合出浊色（P-025）
+            tintColor: NSColor.clear,
             fixedWidth: true
         )
         win.center()
         window = win
 
         guard let contentView = win.contentView else { return }
+
+        applyBackgroundGradient(to: contentView)
 
         // 创建内容容器视图（添加在毛玻璃和主题色叠加层之上）
         let containerView = NSView()
@@ -106,17 +113,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ])
 
         // 添加三个页面视图到容器
+        // 顶部留 28pt 安全区，避免内容与透明标题栏的红绿灯按钮重叠
         for view in [homeView, searchResultView, detailView] {
             view.translatesAutoresizingMaskIntoConstraints = false
             containerView.addSubview(view)
             NSLayoutConstraint.activate([
                 view.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
                 view.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
-                view.topAnchor.constraint(equalTo: containerView.topAnchor),
+                view.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 28),
                 view.bottomAnchor.constraint(equalTo: containerView.bottomAnchor)
             ])
             view.isHidden = true
         }
+    }
+
+    /// 在毛玻璃底部叠加极轻的琥珀渐变，替代纯色 tint（P-025）
+    /// 顶部 0.06 琥珀 → 底部完全透明，只保留一丝"暖呼吸"，不产生浊色
+    private func applyBackgroundGradient(to contentView: NSView) {
+        let gradient = CAGradientLayer()
+        gradient.frame = contentView.bounds
+        gradient.startPoint = CGPoint(x: 0.5, y: 1.0)   // 顶部
+        gradient.endPoint = CGPoint(x: 0.5, y: 0.0)     // 底部
+        let topColor = NSColor(red: 1.0, green: 0.584, blue: 0.0, alpha: 0.06)
+        let bottomColor = NSColor(red: 1.0, green: 0.584, blue: 0.0, alpha: 0.0)
+        gradient.colors = [bottomColor.cgColor, topColor.cgColor]
+        gradient.autoresizingMask = [.layerWidthSizable, .layerHeightSizable]
+        contentView.wantsLayer = true
+        contentView.layer?.insertSublayer(gradient, at: 0)
     }
 
     // MARK: - 页面回调
@@ -146,6 +169,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         searchResultView.onEscape = { [weak self] in
             self?.goBack()
         }
+        searchResultView.onBack = { [weak self] in
+            self?.goBack()
+        }
         searchResultView.onItemClick = { [weak self] item in
             self?.showDetail(item)
         }
@@ -170,12 +196,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - 页面切换
 
-    private func showPage(_ page: Page) {
+    private func showPage(_ page: Page, forceFocus: Bool = false) {
+        // 仅在页面真正切换时聚焦，避免输入过程中反复聚焦导致全选/覆盖（输入法安全）
+        let changed = forceFocus || (page != currentPage)
         currentPage = page
         homeView.isHidden = (page != .home)
         searchResultView.isHidden = (page != .searchResults)
         detailView.isHidden = (page != .detail)
 
+        // 回到首页时清空历史
+        if page == .home {
+            pageHistory = []
+        }
+
+        guard changed else { return }
         if page == .home {
             homeView.focusSearchField()
         } else if page == .searchResults {
@@ -183,15 +217,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// 记录来源页，保证返回时回到进入前的页面（如从收藏进详情应回首页）
+    private func pushHistory() {
+        pageHistory.append(currentPage)
+    }
+
     private func goBack() {
-        switch currentPage {
-        case .detail:
-            showPage(.searchResults)
-        case .searchResults:
-            showPage(.home)
-        case .home:
+        if currentPage == .home {
             toggleWindow()
+            return
         }
+        let previous = pageHistory.popLast() ?? .home
+        showPage(previous)
     }
 
     // MARK: - 搜索逻辑
@@ -213,6 +250,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let results = searchService.search(query: trimmed)
         searchResultView.updateResults(results, query: trimmed)
+        if currentPage != .searchResults {
+            pushHistory()
+        }
         showPage(.searchResults)
     }
 
@@ -222,6 +262,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         var grouped: [ContentType: [ContentItem]] = [:]
         grouped[type] = items
         searchResultView.updateResults(grouped, query: type.displayName)
+        if currentPage != .searchResults {
+            pushHistory()
+        }
         showPage(.searchResults)
     }
 
@@ -252,6 +295,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         detailView.setFavorite(favorites.contains(item.id))
         detailView.onKeyHub = {
             NSWorkspace.shared.open(URL(fileURLWithPath: "/Applications/KeyHub.app"))
+        }
+        if currentPage != .detail {
+            pushHistory()
         }
         showPage(.detail)
     }
@@ -410,4 +456,51 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func quitApp() { NSApp.terminate(nil) }
+
+    /// 调试用：导出当前窗口渲染像素到 /tmp/spicenest_snapshot.png
+    private func exportSnapshot() {
+        guard let contentView = window?.contentView else { return }
+        // 强制布局与绘制，确保视图内容进入渲染树
+        contentView.layoutSubtreeIfNeeded()
+        contentView.displayIfNeeded()
+        CATransaction.flush()
+
+        // 方法1：NSView 官方位图渲染
+        if let rep = contentView.bitmapImageRepForCachingDisplay(in: contentView.bounds) {
+            contentView.cacheDisplay(in: contentView.bounds, to: rep)
+            if let data = rep.representation(using: .png, properties: [:]) {
+                try? data.write(to: URL(fileURLWithPath: "/tmp/spicenest_snapshot.png"))
+                print("SpiceNest snapshot saved (cacheDisplay) \(rep.pixelsWide)x\(rep.pixelsHigh)")
+                return
+            }
+        }
+        // 方法2：PDF 渲染
+        if let pdfData = contentView.dataWithPDF(inside: contentView.bounds) as NSData? {
+            if let pdfRep = NSPDFImageRep(data: pdfData as Data),
+               let rep = NSBitmapImageRep(data: pdfRep.pdfRepresentation) {
+                if let data = rep.representation(using: .png, properties: [:]) {
+                    try? data.write(to: URL(fileURLWithPath: "/tmp/spicenest_snapshot.png"))
+                    print("SpiceNest snapshot saved (pdf) \(rep.pixelsWide)x\(rep.pixelsHigh)")
+                    return
+                }
+            }
+        }
+        // 方法3：layer 渲染兜底
+        let width = Int(contentView.bounds.width)
+        let height = Int(contentView.bounds.height)
+        guard width > 0, height > 0,
+              let ctx = CGContext(data: nil, width: width, height: height,
+                                  bitsPerComponent: 8, bytesPerRow: 0,
+                                  space: CGColorSpaceCreateDeviceRGB(),
+                                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return }
+        ctx.translateBy(x: 0, y: CGFloat(height))
+        ctx.scaleBy(x: 1, y: -1)
+        contentView.layer?.render(in: ctx)
+        guard let cgImage = ctx.makeImage() else { return }
+        let rep = NSBitmapImageRep(cgImage: cgImage)
+        if let data = rep.representation(using: .png, properties: [:]) {
+            try? data.write(to: URL(fileURLWithPath: "/tmp/spicenest_snapshot.png"))
+            print("SpiceNest snapshot saved (layer)")
+        }
+    }
 }
