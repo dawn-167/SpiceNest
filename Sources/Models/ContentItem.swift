@@ -58,6 +58,7 @@ struct ContentItem: Codable, Identifiable {
     let title: String           // 标题（英文原名）
     let chineseTitle: String    // 中文译名
     let summary: String         // 一句话摘要，搜索结果展示
+    let preview: String?        // 关键信息预览（语法/公式），搜索结果卡片第三行展示
     let tags: [String]          // 搜索标签（中英文同义词、缩写）
     let related: [String]       // 关联内容的 id 列表
 }

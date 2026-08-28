@@ -177,6 +177,160 @@
 - 影响：Common 为只读组件，直接改源码违规；但注释/默认值会误导后续调用方。
 - 建议方案：不改 Common 源码；在项目侧（如 DEVELOPMENT_PLAN 或 CODE_STANDARDS）注明"调用 NXWindowStyle 时必须显式传 alpha 0.12 的琥珀色 tint"，避免后续误用默认值。
 
+### P-015：首页 Logo/副标题/热键提示样式与规范不符（P1）
+
+- 发现日期：2026-08-28
+- 严重程度：P1
+- 状态：✅ 已解决
+- 来源：UI 验证（对照 ui-design 7.1）
+- 现象：
+  - 副标题文案为"LTspice 仿真参考助手"，规范为"LTspice 参考助手"（多"仿真"二字）
+  - 热键提示为纯文字"按 ⌃⌥S 快速唤出"，规范要求键帽样式展示（⌃ ⌥ S 分离的视觉样式）
+- 影响：品牌一致性偏差；热键提示识别度低于设计。
+- 建议方案：
+  - HomeView.swift 第 61 行改为规范文案
+  - 热键提示用 NSTextField + attributedString 实现键帽样式（背景色 + 圆角 + 内边距），参考 KeyHub 实现
+
+### P-016：搜索框完全不符合规范（P0）
+
+- 发现日期：2026-08-28
+- 严重程度：P0
+- 状态：✅ 已解决
+- 来源：UI 验证（对照 ui-design 6.1）
+- 现象：
+  - 高度：SearchFieldView 内部 NSSearchField 为 32pt，外层无高度约束，规范要求 36pt
+  - 圆角：系统 roundedBezel，规范要求 10pt
+  - 聚焦态：无琥珀色边框 + 3pt 阴影
+  - 左侧放大镜图标：系统默认，规范要求 16pt 琥珀色
+  - 右侧清除按钮：系统默认
+  - 占位文字："搜索指令、参数、错误、公式..."，规范为"搜索指令、参数、报错、公式…"（漏"技巧/拓扑"、用了英文省略号）
+  - 搜索框左右边距：SearchFieldView 内部 16pt，但外层容器未撑满内容区 20pt 边距
+- 影响：核心交互入口视觉与交互均偏离设计，用户首感不佳。
+- 建议方案：重写 SearchFieldView：
+  - 外层视图高度固定 36pt，左右边距 16pt（内容区 20pt 内撑满）
+  - 背景色不透明白/深灰，layer.cornerRadius = 10
+  - 左侧自定义 NSImageView 放大镜（16pt，琥珀色），右侧自定义清除按钮
+  - 文本字段：NSTextField（非 NSSearchField），bezelStyle = .square，focusRingType = .none
+  - 监听 focus 状态切换 layer.borderColor/shadow
+
+### P-017：卡片悬停/点击动效实现有缺陷（P0）
+
+- 发现日期：2026-08-28
+- 严重程度：P0
+- 状态：✅ 已解决
+- 来源：UI 验证（对照 ui-design 6.2/8.1）
+- 现象：
+  - 悬停上移：`setFrameOrigin(y + 3)` 直接改 frame → 布局抖动、可能触发约束冲突
+  - 点击缩放 0.98：完全缺失
+  - 基础阴影：卡片无默认阴影（规范 0 1pt 4pt rgba(0,0,0,0.06)），仅悬停时加
+- 影响：交互手感廉价，可能导致布局异常。
+- 建议方案：
+  - 悬停改用 `layer.transform = CATransform3DMakeTranslation(0, -3, 0)` + 隐式动画
+  - 点击在 `mouseDown`/`mouseUp` 中加 `layer.transform = CATransform3DMakeScale(0.98, 0.98, 1)`，0.1s 恢复
+  - `setupUI` 中给 layer 加默认阴影
+
+### P-018：内容卡片布局细节多处偏离规范（P1）
+
+- 发现日期：2026-08-28
+- 严重程度：P1
+- 状态：✅ 已解决
+- 来源：UI 验证（对照 ui-design 6.2）
+- 现象：
+  - 标题字号 15pt Semibold → 规范 14pt Semibold (Code 字体)
+  - 中文标题 12pt → 规范 13pt Body
+  - 摘要 12pt 2行 → 规范 11pt Small 1行省略
+  - 缺第三行：关键信息预览（语法/公式）+ 复制按钮
+  - 内边距：上 14/左 16/右 12/下 14 → 规范统一 14pt
+  - 无基础阴影（规范 0 1pt 4pt rgba(0,0,0,0.06)）
+- 影响：卡片信息密度、视觉层级与设计不符。
+- 建议方案：ContentCardView.configure + setupConstraints 全面对齐规范表：
+  - 字号/行数/截断模式
+  - 增加第三行视图（语法预览 + 复制按钮）
+  - 统一内边距 14pt，加默认阴影
+
+### P-019：详情页结构多处偏离规范（P1）
+
+- 发现日期：2026-08-28
+- 严重程度：P1
+- 状态：✅ 已解决
+- 来源：UI 验证（对照 ui-design 7.3）
+- 现象：
+  - 返回按钮：仅 chevron.left 图标 → 规范文字"‹ 返回"
+  - 中文标题 14pt → 规范 13pt Body
+  - 类型标签：TagView 字号 10pt、背景 controlBackgroundColor、无类型色 → 规范 11pt Medium、类型色背景 alpha 0.12、类型色文字
+  - 底部操作栏缺"查快捷键(KeyHub)"按钮
+  - 关联内容用 NSButton 非标准卡片样式
+- 影响：详情页视觉规范度、品牌一致性偏差。
+- 建议方案：
+  - 返回按钮改文字按钮（bezelStyle = .rounded, isBordered = false, title = "‹ 返回"）
+  - 中文标题字号 13pt
+  - TagView 增加类型色配置（或 DetailView 中直接用对应颜色配置）
+  - 底部操作栏加第三个按钮（图标 arrow.up.right.square，点击调用 NXURLScheme.openApp(keyhub)）
+  - 关联内容改用类卡片样式（或统一按钮但加类型色图标）
+
+### P-020：分组标题缺类型图标、字号、分隔线（P1）
+
+- 发现日期：2026-08-28
+- 严重程度：P1
+- 状态：✅ 已解决
+- 来源：UI 验证（对照 ui-design 6.8）
+- 现象：
+  - SectionHeaderView 字号 13pt Semibold → 规范 16pt Semibold
+  - 无左侧类型图标（14pt，类型色）
+  - 无底部分隔线（1pt）或 8pt 间距
+- 影响：搜索结果分组视觉层级弱。
+- 建议方案：SectionHeaderView 增加 iconView、字号 16pt、底部加 SeparatorView 或 spacing 8pt。
+
+### P-021：空状态尺寸不符（P2）
+
+- 发现日期：2026-08-28
+- 严重程度：P2
+- 状态：⬜ 待处理
+- 来源：UI 验证（对照 ui-design 6.9）
+- 现象：
+  - 图标 32pt → 规范 48pt
+  - 标题 15pt Medium → 规范 13pt Medium
+  - 建议文字 12pt → 规范 11pt
+- 影响：空状态视觉权重偏小。
+- 建议方案：EmptyStateView 调整尺寸对齐规范。
+
+### P-022：快速分类标签样式与交互不符（P1）
+
+- 发现日期：2026-08-28
+- 严重程度：P1
+- 状态：✅ 已解决
+- 来源：UI 验证（对照 ui-design 7.1）
+- 现象：
+  - NSButton rounded bezel 固定一行不换行 → 规范横向可换行（或网格）
+  - 启用态仅 contentTintColor 琥珀色 → 规范标签背景琥珀 alpha 0.12、文字琥珀、有悬停/选中态
+  - 禁用态 isEnabled = false 灰色 → 规范次文字色、可视但不可点
+- 影响：首页分类筛选交互体验弱于设计。
+- 建议方案：自定义 TagButton（NSView + layer + trackingArea），支持换行布局（NSFlowLayout 或手动布局），状态完整（默认/悬停/按下/选中/禁用）。
+
+### P-023：收藏区布局为垂直列表，规范要求横向滚动/网格（P2）
+
+- 发现日期：2026-08-28
+- 严重程度：P2
+- 状态：⬜ 待处理
+- 来源：UI 验证（对照 ui-design 7.1）
+- 现象：HomeView.updateFavorites 用垂直 NSStackView → 规范横向滚动卡片或网格（每行 3 个）。
+- 影响：收藏多时需上下滚动，不如横向浏览高效。
+- 建议方案：改用 NSScrollView + 横向 NSStackView（hasHorizontalScroller = true），卡片宽度固定 ~160pt，或用 NSCollectionView 网格。
+
+### P-024：深色模式下代码块/卡片对比度未验证（P2）
+
+- 发现日期：2026-08-28
+- 严重程度：P2
+- 状态：⬜ 待处理
+- 来源：UI 验证（对照 ui-design 10/11）
+- 现象：
+  - CopyableCodeView 硬编码深色背景 `#1E1E1E` 近似值 → 应用语义色或动态色
+  - 卡片悬停琥珀边框 alpha 0.6 在深色模式下对比度存疑
+- 影响：深色模式下可访问性可能不达标（WCAG AA 4.5:1）。
+- 建议方案：
+  - CopyableCodeView 用 `NSColor.textBackgroundColor` 或自定义动态色
+  - 深色模式下手动验证所有卡片/代码块/边框对比度，必要时调整 alpha
+
 ---
 
 ## 本次验证通过项（无需处理）
@@ -207,10 +361,10 @@
 
 | 严重程度 | 总数 | 待处理 | 处理中 | 已解决 |
 |---------|------|--------|--------|--------|
-| P0 | 0 | 0 | 0 | 0 |
-| P1 | 6 | 0 | 0 | 6 |
-| P2 | 8 | 4 | 0 | 4 |
-| **合计** | **14** | **4** | **0** | **10** |
+| P0 | 2 | 0 | 0 | 2 |
+| P1 | 12 | 1 | 0 | 11 |
+| P2 | 12 | 8 | 0 | 4 |
+| **合计** | **26** | **9** | **0** | **17** |
 
 ---
 
@@ -218,6 +372,7 @@
 
 | 版本 | 日期 | 说明 |
 |------|------|------|
+| v0.3 | 2026-08-28 | 复读 UI 实现代码，新增 P-015~P-024（搜索框/卡片动效/详情页/分组标题/空状态/快速分类/收藏区/深色模式等），清理 P-014 重复项 |
 | v0.2 | 2026-08-28 | UI 验证：新增 P-008~P-014（复制全部只复制第一条、Enter 不打开选中项等），通过项表补充 UI 类 8 项 |
 | v0.1 | 2026-08-28 | 初始问题记录：ERROR_PREVENTION 落地验证发现 7 项问题（P1×4、P2×3） |
 

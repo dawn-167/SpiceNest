@@ -250,6 +250,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         detailView.configure(with: item, commandDetail: commandDetail, errorDetail: errorDetail, relatedItems: relatedItems)
         detailView.setFavorite(favorites.contains(item.id))
+        detailView.onKeyHub = {
+            NSWorkspace.shared.open(URL(fileURLWithPath: "/Applications/KeyHub.app"))
+        }
         showPage(.detail)
     }
 

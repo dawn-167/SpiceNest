@@ -23,6 +23,7 @@ final class HomeView: NSView {
     private let logoLabel = NSTextField(labelWithString: "")
     private let subtitleLabel = NSTextField(labelWithString: "")
     private let hotkeyLabel = NSTextField(labelWithString: "")
+    private let hotkeyStackView = NSStackView()
     private let searchField = SearchFieldView()
     private let categoriesStackView = NSStackView()
     private let favoritesLabel = NSTextField(labelWithString: "")
@@ -58,19 +59,45 @@ final class HomeView: NSView {
 
         // 副标题
         subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
-        subtitleLabel.stringValue = "LTspice 仿真参考助手"
+        subtitleLabel.stringValue = "LTspice 参考助手"
         subtitleLabel.font = NSFont.systemFont(ofSize: 13, weight: .regular)
         subtitleLabel.textColor = .secondaryLabelColor
         subtitleLabel.alignment = .center
         addSubview(subtitleLabel)
 
-        // 热键提示
+        // 热键提示（键帽样式）
         hotkeyLabel.translatesAutoresizingMaskIntoConstraints = false
-        hotkeyLabel.stringValue = "按 ⌃⌥S 快速唤出"
+        hotkeyLabel.stringValue = "快速唤出"
         hotkeyLabel.font = NSFont.systemFont(ofSize: 11, weight: .regular)
         hotkeyLabel.textColor = .tertiaryLabelColor
         hotkeyLabel.alignment = .center
         addSubview(hotkeyLabel)
+
+        // 键帽容器
+        hotkeyStackView.translatesAutoresizingMaskIntoConstraints = false
+        hotkeyStackView.orientation = .horizontal
+        hotkeyStackView.spacing = 4
+        hotkeyStackView.alignment = .centerY
+        addSubview(hotkeyStackView)
+
+        let keycaps = ["⌃", "⌥", "S"]
+        for key in keycaps {
+            let keyView = NSTextField(labelWithString: key)
+            keyView.translatesAutoresizingMaskIntoConstraints = false
+            keyView.font = NSFont.systemFont(ofSize: 11, weight: .semibold)
+            keyView.textColor = .labelColor
+            keyView.alignment = .center
+            keyView.wantsLayer = true
+            keyView.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+            keyView.layer?.cornerRadius = 4
+            keyView.layer?.borderWidth = 0.5
+            keyView.layer?.borderColor = NSColor.separatorColor.cgColor
+            hotkeyStackView.addArrangedSubview(keyView)
+            NSLayoutConstraint.activate([
+                keyView.widthAnchor.constraint(equalToConstant: 20),
+                keyView.heightAnchor.constraint(equalToConstant: 18)
+            ])
+        }
 
         // 搜索框
         searchField.translatesAutoresizingMaskIntoConstraints = false
@@ -82,11 +109,11 @@ final class HomeView: NSView {
         }
         addSubview(searchField)
 
-        // 快速分类标签
+        // 快速分类标签（两行布局）
         categoriesStackView.translatesAutoresizingMaskIntoConstraints = false
-        categoriesStackView.orientation = .horizontal
+        categoriesStackView.orientation = .vertical
         categoriesStackView.spacing = 8
-        categoriesStackView.alignment = .centerY
+        categoriesStackView.alignment = .centerX
         addSubview(categoriesStackView)
 
         let categories: [(type: ContentType, enabled: Bool)] = [
@@ -98,21 +125,38 @@ final class HomeView: NSView {
             (.topology, false)
         ]
 
+        // 第一行：前 3 个
+        let row1 = NSStackView()
+        row1.orientation = .horizontal
+        row1.spacing = 8
+        row1.alignment = .centerY
+
+        // 第二行：后 3 个
+        let row2 = NSStackView()
+        row2.orientation = .horizontal
+        row2.spacing = 8
+        row2.alignment = .centerY
+
         for (index, (type, enabled)) in categories.enumerated() {
-            let button = NSButton(title: type.displayName, target: self, action: #selector(categoryClicked(_:)))
-            button.bezelStyle = .rounded
-            button.isBordered = false
-            button.font = NSFont.systemFont(ofSize: 11, weight: .medium)
-            button.tag = index
+            let tag = CategoryTagView()
+            tag.text = type.displayName
+            tag.isEnabled = enabled
+            tag.translatesAutoresizingMaskIntoConstraints = false
             categoryTypes.append(type)
-            if enabled {
-                button.contentTintColor = NSColor(calibratedRed: 1.0, green: 0.584, blue: 0.0, alpha: 1.0)
-            } else {
-                button.contentTintColor = .tertiaryLabelColor
-                button.isEnabled = false
+
+            tag.onClick = { [weak self] in
+                self?.categoryClicked(type: type)
             }
-            categoriesStackView.addArrangedSubview(button)
+
+            if index < 3 {
+                row1.addArrangedSubview(tag)
+            } else {
+                row2.addArrangedSubview(tag)
+            }
         }
+
+        categoriesStackView.addArrangedSubview(row1)
+        categoriesStackView.addArrangedSubview(row2)
 
         // 收藏区标题
         favoritesLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -157,10 +201,13 @@ final class HomeView: NSView {
             subtitleLabel.topAnchor.constraint(equalTo: logoLabel.bottomAnchor, constant: 8),
             subtitleLabel.centerXAnchor.constraint(equalTo: centerXAnchor),
 
-            hotkeyLabel.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 6),
-            hotkeyLabel.centerXAnchor.constraint(equalTo: centerXAnchor),
+            hotkeyStackView.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: 6),
+            hotkeyStackView.centerXAnchor.constraint(equalTo: centerXAnchor, constant: -30),
 
-            searchField.topAnchor.constraint(equalTo: hotkeyLabel.bottomAnchor, constant: 20),
+            hotkeyLabel.centerYAnchor.constraint(equalTo: hotkeyStackView.centerYAnchor),
+            hotkeyLabel.leadingAnchor.constraint(equalTo: hotkeyStackView.trailingAnchor, constant: 8),
+
+            searchField.topAnchor.constraint(equalTo: hotkeyStackView.bottomAnchor, constant: 20),
             searchField.leadingAnchor.constraint(equalTo: leadingAnchor),
             searchField.trailingAnchor.constraint(equalTo: trailingAnchor),
             searchField.heightAnchor.constraint(equalToConstant: 36),
@@ -235,9 +282,7 @@ final class HomeView: NSView {
 
     // MARK: - 动作
 
-    @objc private func categoryClicked(_ sender: NSButton) {
-        guard sender.tag >= 0 && sender.tag < categoryTypes.count else { return }
-        let type = categoryTypes[sender.tag]
+    private func categoryClicked(type: ContentType) {
         onCategoryClick?(type)
     }
 }

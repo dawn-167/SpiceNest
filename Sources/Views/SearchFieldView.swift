@@ -2,7 +2,7 @@ import Cocoa
 
 // MARK: - 搜索框视图
 
-/// 搜索框组件，自动聚焦，实时搜索回调，清除按钮
+/// 搜索框组件，自定义样式，自动聚焦，实时搜索回调，清除按钮
 final class SearchFieldView: NSView {
     // MARK: - 回调
 
@@ -24,12 +24,18 @@ final class SearchFieldView: NSView {
 
     // MARK: - 属性
 
-    private let searchField = NSSearchField()
+    private let backgroundView = NSView()
+    private let iconView = NSImageView()
+    private let textField = NSTextField()
+    private let clearButton = NSButton()
     private var debounceTimer: Timer?
 
     var text: String {
-        get { searchField.stringValue }
-        set { searchField.stringValue = newValue }
+        get { textField.stringValue }
+        set {
+            textField.stringValue = newValue
+            updateClearButtonVisibility()
+        }
     }
 
     // MARK: - 初始化
@@ -46,23 +52,78 @@ final class SearchFieldView: NSView {
     // MARK: - UI 设置
 
     private func setupUI() {
-        wantsLayer = true
+        wantsLayer = false
 
-        searchField.translatesAutoresizingMaskIntoConstraints = false
-        searchField.placeholderString = "搜索指令、参数、错误、公式..."
-        searchField.font = NSFont.systemFont(ofSize: 14)
-        searchField.bezelStyle = .roundedBezel
-        searchField.focusRingType = .none
-        searchField.delegate = self
-        searchField.target = self
-        searchField.action = #selector(searchFieldAction)
-        addSubview(searchField)
+        // 背景视图（圆角 + 边框 + 阴影）
+        backgroundView.translatesAutoresizingMaskIntoConstraints = false
+        backgroundView.wantsLayer = true
+        backgroundView.layer?.cornerRadius = 10
+        backgroundView.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+        backgroundView.layer?.borderWidth = 1
+        backgroundView.layer?.borderColor = NSColor.separatorColor.cgColor
+        addSubview(backgroundView)
 
+        // 左侧放大镜图标
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+        let config = NSImage.SymbolConfiguration(pointSize: 14, weight: .medium)
+        let icon = NSImage(systemSymbolName: "magnifyingglass", accessibilityDescription: "搜索")?.withSymbolConfiguration(config)
+        iconView.image = icon
+        iconView.contentTintColor = NSColor(calibratedRed: 1.0, green: 0.584, blue: 0.0, alpha: 1.0)
+        backgroundView.addSubview(iconView)
+
+        // 文本字段
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        textField.placeholderString = "搜索指令、参数、报错、公式…"
+        textField.font = NSFont.systemFont(ofSize: 14)
+        textField.textColor = .labelColor
+        textField.backgroundColor = .clear
+        textField.bezelStyle = .squareBezel
+        textField.isBordered = false
+        textField.focusRingType = .none
+        textField.delegate = self
+        textField.target = self
+        textField.action = #selector(textFieldAction)
+        textField.cell?.usesSingleLineMode = true
+        textField.cell?.lineBreakMode = .byTruncatingTail
+        backgroundView.addSubview(textField)
+
+        // 清除按钮
+        clearButton.translatesAutoresizingMaskIntoConstraints = false
+        clearButton.bezelStyle = .rounded
+        clearButton.isBordered = false
+        clearButton.title = ""
+        clearButton.target = self
+        clearButton.action = #selector(clearClicked)
+        let clearConfig = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
+        let clearIcon = NSImage(systemSymbolName: "xmark.circle.fill", accessibilityDescription: "清除")?.withSymbolConfiguration(clearConfig)
+        clearButton.image = clearIcon
+        clearButton.imagePosition = .imageOnly
+        clearButton.contentTintColor = .tertiaryLabelColor
+        clearButton.isHidden = true
+        backgroundView.addSubview(clearButton)
+
+        // 约束
         NSLayoutConstraint.activate([
-            searchField.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
-            searchField.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
-            searchField.centerYAnchor.constraint(equalTo: centerYAnchor),
-            searchField.heightAnchor.constraint(equalToConstant: 32)
+            backgroundView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            backgroundView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            backgroundView.topAnchor.constraint(equalTo: topAnchor),
+            backgroundView.bottomAnchor.constraint(equalTo: bottomAnchor),
+            backgroundView.heightAnchor.constraint(equalToConstant: 36),
+
+            iconView.leadingAnchor.constraint(equalTo: backgroundView.leadingAnchor, constant: 12),
+            iconView.centerYAnchor.constraint(equalTo: backgroundView.centerYAnchor),
+            iconView.widthAnchor.constraint(equalToConstant: 16),
+            iconView.heightAnchor.constraint(equalToConstant: 16),
+
+            textField.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: 8),
+            textField.trailingAnchor.constraint(equalTo: clearButton.leadingAnchor, constant: -8),
+            textField.centerYAnchor.constraint(equalTo: backgroundView.centerYAnchor),
+            textField.heightAnchor.constraint(equalToConstant: 22),
+
+            clearButton.trailingAnchor.constraint(equalTo: backgroundView.trailingAnchor, constant: -8),
+            clearButton.centerYAnchor.constraint(equalTo: backgroundView.centerYAnchor),
+            clearButton.widthAnchor.constraint(equalToConstant: 20),
+            clearButton.heightAnchor.constraint(equalToConstant: 20)
         ])
     }
 
@@ -70,19 +131,44 @@ final class SearchFieldView: NSView {
 
     /// 聚焦搜索框
     func focus() {
-        window?.makeFirstResponder(searchField)
+        window?.makeFirstResponder(textField)
     }
 
     /// 清除搜索内容
     func clear() {
-        searchField.stringValue = ""
+        textField.stringValue = ""
+        updateClearButtonVisibility()
         onTextChange?("")
     }
 
     // MARK: - 动作
 
-    @objc private func searchFieldAction() {
-        onEnter?(searchField.stringValue)
+    @objc private func textFieldAction() {
+        onEnter?(textField.stringValue)
+    }
+
+    @objc private func clearClicked() {
+        clear()
+        focus()
+    }
+
+    // MARK: - 聚焦态样式
+
+    private func updateFocusStyle(_ focused: Bool) {
+        if focused {
+            backgroundView.layer?.borderColor = NSColor(calibratedRed: 1.0, green: 0.584, blue: 0.0, alpha: 1.0).cgColor
+            backgroundView.layer?.shadowColor = NSColor(calibratedRed: 1.0, green: 0.584, blue: 0.0, alpha: 0.3).cgColor
+            backgroundView.layer?.shadowOpacity = 1.0
+            backgroundView.layer?.shadowRadius = 3
+            backgroundView.layer?.shadowOffset = CGSize(width: 0, height: 0)
+        } else {
+            backgroundView.layer?.borderColor = NSColor.separatorColor.cgColor
+            backgroundView.layer?.shadowOpacity = 0
+        }
+    }
+
+    private func updateClearButtonVisibility() {
+        clearButton.isHidden = textField.stringValue.isEmpty
     }
 
     // MARK: - 节流
@@ -95,16 +181,25 @@ final class SearchFieldView: NSView {
     }
 }
 
-// MARK: - NSSearchFieldDelegate
+// MARK: - NSTextFieldDelegate
 
-extension SearchFieldView: NSSearchFieldDelegate {
+extension SearchFieldView: NSTextFieldDelegate {
+    func controlTextDidBeginEditing(_ obj: Notification) {
+        updateFocusStyle(true)
+    }
+
+    func controlTextDidEndEditing(_ obj: Notification) {
+        updateFocusStyle(false)
+    }
+
     func controlTextDidChange(_ obj: Notification) {
-        debounceSearch(searchField.stringValue)
+        updateClearButtonVisibility()
+        debounceSearch(textField.stringValue)
     }
 
     func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
         if commandSelector == #selector(NSResponder.insertNewline(_:)) {
-            onEnter?(searchField.stringValue)
+            onEnter?(textField.stringValue)
             return true
         }
         if commandSelector == #selector(NSResponder.cancelOperation(_:)) {

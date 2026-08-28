@@ -18,6 +18,9 @@ final class DetailView: NSView {
     /// 点击关联内容回调
     var onRelatedItemClick: ((ContentItem) -> Void)?
 
+    /// 点击查快捷键回调
+    var onKeyHub: (() -> Void)?
+
     // MARK: - 属性
 
     private let backButton = NSButton()
@@ -29,6 +32,7 @@ final class DetailView: NSView {
     private let summaryLabel = NSTextField(labelWithString: "")
     private let favoriteButton = NSButton()
     private let copyAllButton = NSButton()
+    private let keyhubButton = NSButton()
 
     private var item: ContentItem?
     private var isFavorite: Bool = false
@@ -50,17 +54,14 @@ final class DetailView: NSView {
     private func setupUI() {
         wantsLayer = true
 
-        // 返回按钮
+        // 返回按钮（文字"‹ 返回"）
         backButton.translatesAutoresizingMaskIntoConstraints = false
         backButton.bezelStyle = .rounded
         backButton.isBordered = false
-        backButton.title = ""
+        backButton.title = "‹ 返回"
+        backButton.font = NSFont.systemFont(ofSize: 13, weight: .medium)
         backButton.target = self
         backButton.action = #selector(backClicked)
-        let backConfig = NSImage.SymbolConfiguration(pointSize: 14, weight: .medium)
-        let backIcon = NSImage(systemSymbolName: "chevron.left", accessibilityDescription: "返回")?.withSymbolConfiguration(backConfig)
-        backButton.image = backIcon
-        backButton.imagePosition = .imageOnly
         backButton.contentTintColor = .labelColor
         addSubview(backButton)
 
@@ -87,9 +88,9 @@ final class DetailView: NSView {
         titleLabel.maximumNumberOfLines = 0
         contentStackView.addArrangedSubview(titleLabel)
 
-        // 中文标题
+        // 中文标题（13pt Body）
         chineseTitleLabel.translatesAutoresizingMaskIntoConstraints = false
-        chineseTitleLabel.font = NSFont.systemFont(ofSize: 14, weight: .regular)
+        chineseTitleLabel.font = NSFont.systemFont(ofSize: 13, weight: .regular)
         chineseTitleLabel.textColor = .secondaryLabelColor
         contentStackView.addArrangedSubview(chineseTitleLabel)
 
@@ -138,6 +139,20 @@ final class DetailView: NSView {
         copyAllButton.contentTintColor = .secondaryLabelColor
         addSubview(copyAllButton)
 
+        // KeyHub 按钮
+        keyhubButton.translatesAutoresizingMaskIntoConstraints = false
+        keyhubButton.bezelStyle = .rounded
+        keyhubButton.isBordered = false
+        keyhubButton.title = "查快捷键"
+        keyhubButton.target = self
+        keyhubButton.action = #selector(keyhubClicked)
+        let keyhubConfig = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
+        let keyhubIcon = NSImage(systemSymbolName: "arrow.up.right.square", accessibilityDescription: "查快捷键")?.withSymbolConfiguration(keyhubConfig)
+        keyhubButton.image = keyhubIcon
+        keyhubButton.imagePosition = .imageLeft
+        keyhubButton.contentTintColor = .secondaryLabelColor
+        addSubview(keyhubButton)
+
         setupConstraints()
     }
 
@@ -162,6 +177,10 @@ final class DetailView: NSView {
             favoriteButton.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
             favoriteButton.heightAnchor.constraint(equalToConstant: 28),
 
+            keyhubButton.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -12),
+            keyhubButton.centerXAnchor.constraint(equalTo: centerXAnchor),
+            keyhubButton.heightAnchor.constraint(equalToConstant: 28),
+
             copyAllButton.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -12),
             copyAllButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
             copyAllButton.heightAnchor.constraint(equalToConstant: 28)
@@ -177,6 +196,8 @@ final class DetailView: NSView {
         titleLabel.stringValue = item.title
         chineseTitleLabel.stringValue = item.chineseTitle
         typeTag.text = item.type.displayName
+        typeTag.textColor = item.type.color
+        typeTag.backgroundColor = item.type.color.withAlphaComponent(0.12)
         summaryLabel.stringValue = item.summary
 
         // 清空之前的详情内容（保留前 5 个：标题、中文标题、类型标签、摘要、分隔线）
@@ -360,5 +381,9 @@ final class DetailView: NSView {
     @objc private func copyAllClicked() {
         guard let item = item else { return }
         onCopyAll?(item)
+    }
+
+    @objc private func keyhubClicked() {
+        onKeyHub?()
     }
 }

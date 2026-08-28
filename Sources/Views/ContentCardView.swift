@@ -18,6 +18,7 @@ final class ContentCardView: NSView {
     private let iconView = NSImageView()
     private let titleLabel = NSTextField(labelWithString: "")
     private let chineseTitleLabel = NSTextField(labelWithString: "")
+    private let previewLabel = NSTextField(labelWithString: "")
     private let summaryLabel = NSTextField(labelWithString: "")
     private let typeTag = TagView()
     private let copyButton = NSButton()
@@ -45,39 +46,48 @@ final class ContentCardView: NSView {
         layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
         layer?.borderWidth = 1
         layer?.borderColor = NSColor.clear.cgColor
+        // 默认阴影（规范 0 1pt 4pt rgba(0,0,0,0.06)）
+        layer?.shadowColor = NSColor.black.cgColor
+        layer?.shadowOpacity = 0.06
+        layer?.shadowRadius = 4
+        layer?.shadowOffset = CGSize(width: 0, height: -1)
 
         // 类型图标
         iconView.translatesAutoresizingMaskIntoConstraints = false
         iconView.imageScaling = .scaleProportionallyUpOrDown
         addSubview(iconView)
 
-        // 标题
+        // 标题（14pt Semibold Code 字体）
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.font = NSFont.systemFont(ofSize: 15, weight: .semibold)
+        titleLabel.font = NSFont(name: "SF Mono", size: 14) ?? NSFont.monospacedSystemFont(ofSize: 14, weight: .semibold)
         titleLabel.textColor = .labelColor
         titleLabel.lineBreakMode = .byTruncatingTail
         titleLabel.maximumNumberOfLines = 1
         addSubview(titleLabel)
 
-        // 中文标题
+        // 中文标题（13pt Body）
         chineseTitleLabel.translatesAutoresizingMaskIntoConstraints = false
-        chineseTitleLabel.font = NSFont.systemFont(ofSize: 12, weight: .regular)
+        chineseTitleLabel.font = NSFont.systemFont(ofSize: 13, weight: .regular)
         chineseTitleLabel.textColor = .secondaryLabelColor
         chineseTitleLabel.lineBreakMode = .byTruncatingTail
         chineseTitleLabel.maximumNumberOfLines = 1
         addSubview(chineseTitleLabel)
 
-        // 摘要
+        // 关键信息预览（第三行，11pt Code 字体）
+        previewLabel.translatesAutoresizingMaskIntoConstraints = false
+        previewLabel.font = NSFont(name: "SF Mono", size: 11) ?? NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)
+        previewLabel.textColor = .tertiaryLabelColor
+        previewLabel.lineBreakMode = .byTruncatingTail
+        previewLabel.maximumNumberOfLines = 1
+        addSubview(previewLabel)
+
+        // 摘要（11pt Small 1行省略）
         summaryLabel.translatesAutoresizingMaskIntoConstraints = false
-        summaryLabel.font = NSFont.systemFont(ofSize: 12, weight: .regular)
+        summaryLabel.font = NSFont.systemFont(ofSize: 11, weight: .regular)
         summaryLabel.textColor = .tertiaryLabelColor
         summaryLabel.lineBreakMode = .byTruncatingTail
-        summaryLabel.maximumNumberOfLines = 2
+        summaryLabel.maximumNumberOfLines = 1
         addSubview(summaryLabel)
-
-        // 类型标签
-        typeTag.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(typeTag)
 
         // 复制按钮
         copyButton.translatesAutoresizingMaskIntoConstraints = false
@@ -98,29 +108,36 @@ final class ContentCardView: NSView {
 
     private func setupConstraints() {
         NSLayoutConstraint.activate([
-            iconView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
+            // 图标（左 14pt，上 14pt）
+            iconView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 14),
             iconView.topAnchor.constraint(equalTo: topAnchor, constant: 14),
             iconView.widthAnchor.constraint(equalToConstant: 20),
             iconView.heightAnchor.constraint(equalToConstant: 20),
 
+            // 标题（第一行）
             titleLabel.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: 10),
-            titleLabel.topAnchor.constraint(equalTo: topAnchor, constant: 12),
+            titleLabel.topAnchor.constraint(equalTo: topAnchor, constant: 14),
             titleLabel.trailingAnchor.constraint(equalTo: copyButton.leadingAnchor, constant: -8),
 
+            // 中文标题（第二行）
             chineseTitleLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
             chineseTitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 2),
             chineseTitleLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
 
-            typeTag.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
-            typeTag.topAnchor.constraint(equalTo: chineseTitleLabel.bottomAnchor, constant: 6),
+            // 关键信息预览（第三行）
+            previewLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
+            previewLabel.topAnchor.constraint(equalTo: chineseTitleLabel.bottomAnchor, constant: 4),
+            previewLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -14),
 
+            // 摘要（第四行）
             summaryLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
-            summaryLabel.topAnchor.constraint(equalTo: typeTag.bottomAnchor, constant: 8),
-            summaryLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
+            summaryLabel.topAnchor.constraint(equalTo: previewLabel.bottomAnchor, constant: 4),
+            summaryLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -14),
             summaryLabel.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -14),
 
+            // 复制按钮（右上 14pt）
             copyButton.topAnchor.constraint(equalTo: topAnchor, constant: 12),
-            copyButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12),
+            copyButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -14),
             copyButton.widthAnchor.constraint(equalToConstant: 28),
             copyButton.heightAnchor.constraint(equalToConstant: 28)
         ])
@@ -160,8 +177,8 @@ final class ContentCardView: NSView {
 
         titleLabel.stringValue = item.title
         chineseTitleLabel.stringValue = item.chineseTitle
+        previewLabel.stringValue = item.preview ?? ""
         summaryLabel.stringValue = item.summary
-        typeTag.text = item.type.displayName
     }
 
     // MARK: - 鼠标事件
@@ -174,7 +191,25 @@ final class ContentCardView: NSView {
         applyHoverState(false)
     }
 
+    override func mouseDown(with event: NSEvent) {
+        super.mouseDown(with: event)
+        // 点击缩放 0.98
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.1
+            context.allowsImplicitAnimation = true
+            layer?.transform = CATransform3DMakeScale(0.98, 0.98, 1)
+        }
+    }
+
     override func mouseUp(with event: NSEvent) {
+        super.mouseUp(with: event)
+        // 恢复缩放
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.1
+            context.allowsImplicitAnimation = true
+            layer?.transform = CATransform3DIdentity
+        }
+
         guard let item = item else { return }
         // 检查是否点击了复制按钮
         let copyButtonPoint = convert(event.locationInWindow, from: nil)
@@ -203,12 +238,17 @@ final class ContentCardView: NSView {
                 layer?.shadowOpacity = 0.15
                 layer?.shadowRadius = 8
                 layer?.shadowOffset = CGSize(width: 0, height: -3)
-                setFrameOrigin(NSPoint(x: frame.origin.x, y: frame.origin.y + 3))
+                // 用 layer.transform 上移 3pt，替代 setFrameOrigin 避免布局抖动
+                layer?.transform = CATransform3DMakeTranslation(0, 3, 0)
                 copyButton.isHidden = false
             } else {
                 layer?.borderColor = NSColor.clear.cgColor
-                layer?.shadowOpacity = 0
-                setFrameOrigin(NSPoint(x: frame.origin.x, y: frame.origin.y - 3))
+                // 恢复默认阴影
+                layer?.shadowColor = NSColor.black.cgColor
+                layer?.shadowOpacity = 0.06
+                layer?.shadowRadius = 4
+                layer?.shadowOffset = CGSize(width: 0, height: -1)
+                layer?.transform = CATransform3DIdentity
                 copyButton.isHidden = true
             }
         }

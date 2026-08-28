@@ -2,10 +2,12 @@ import Cocoa
 
 // MARK: - 分组标题视图
 
-/// 搜索结果分组标题，显示类型名和数量
+/// 搜索结果分组标题，显示类型图标、类型名和数量
 final class SectionHeaderView: NSView {
+    private let iconView = NSImageView()
     private let titleLabel = NSTextField(labelWithString: "")
     private let countLabel = NSTextField(labelWithString: "")
+    private let separatorView = NSView()
 
     var title: String = "" {
         didSet { titleLabel.stringValue = title }
@@ -13,6 +15,16 @@ final class SectionHeaderView: NSView {
 
     var count: Int = 0 {
         didSet { countLabel.stringValue = count > 0 ? "(\(count))" : "" }
+    }
+
+    var contentType: ContentType? {
+        didSet {
+            guard let type = contentType else { return }
+            let config = NSImage.SymbolConfiguration(pointSize: 14, weight: .medium)
+            let icon = NSImage(systemSymbolName: type.iconName, accessibilityDescription: nil)?.withSymbolConfiguration(config)
+            iconView.image = icon
+            iconView.contentTintColor = type.color
+        }
     }
 
     override init(frame frameRect: NSRect) {
@@ -27,21 +39,44 @@ final class SectionHeaderView: NSView {
     private func setupUI() {
         wantsLayer = true
 
-        titleLabel.font = NSFont.systemFont(ofSize: 13, weight: .semibold)
+        // 类型图标
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+        iconView.imageScaling = .scaleProportionallyUpOrDown
+        addSubview(iconView)
+
+        // 标题
+        titleLabel.font = NSFont.systemFont(ofSize: 16, weight: .semibold)
         titleLabel.textColor = .labelColor
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         addSubview(titleLabel)
 
-        countLabel.font = NSFont.systemFont(ofSize: 11, weight: .regular)
+        // 数量
+        countLabel.font = NSFont.systemFont(ofSize: 12, weight: .regular)
         countLabel.textColor = .secondaryLabelColor
         countLabel.translatesAutoresizingMaskIntoConstraints = false
         addSubview(countLabel)
 
+        // 底部分隔线
+        separatorView.translatesAutoresizingMaskIntoConstraints = false
+        separatorView.wantsLayer = true
+        separatorView.layer?.backgroundColor = NSColor.separatorColor.cgColor
+        addSubview(separatorView)
+
         NSLayoutConstraint.activate([
-            titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
+            iconView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
+            iconView.centerYAnchor.constraint(equalTo: centerYAnchor),
+            iconView.widthAnchor.constraint(equalToConstant: 16),
+            iconView.heightAnchor.constraint(equalToConstant: 16),
+
+            titleLabel.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: 8),
             titleLabel.centerYAnchor.constraint(equalTo: centerYAnchor),
             countLabel.leadingAnchor.constraint(equalTo: titleLabel.trailingAnchor, constant: 6),
-            countLabel.centerYAnchor.constraint(equalTo: centerYAnchor)
+            countLabel.centerYAnchor.constraint(equalTo: centerYAnchor),
+
+            separatorView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
+            separatorView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
+            separatorView.bottomAnchor.constraint(equalTo: bottomAnchor),
+            separatorView.heightAnchor.constraint(equalToConstant: 1)
         ])
     }
 }

@@ -21,7 +21,8 @@
         "command-dc",
         "command-tran",
         "command-options"
-      ]
+      ],
+      "preview": ".op"
     },
     {
       "id": "command-tran",
@@ -45,7 +46,8 @@
         "command-ic",
         "command-options",
         "error-time-step-too-small"
-      ]
+      ],
+      "preview": ".tran <tstop>"
     },
     {
       "id": "command-ac",
@@ -68,7 +70,8 @@
         "command-op",
         "command-meas",
         "command-options"
-      ]
+      ],
+      "preview": ".ac <sweep_type> <npoints> <fstart> <fstop>"
     },
     {
       "id": "command-dc",
@@ -88,7 +91,8 @@
         "command-op",
         "command-step",
         "command-options"
-      ]
+      ],
+      "preview": ".dc <src> <vstart> <vstop> <vincrement>"
     },
     {
       "id": "command-step",
@@ -112,7 +116,8 @@
         "command-tran",
         "command-ac",
         "command-options"
-      ]
+      ],
+      "preview": ".step <param> <start> <stop> <step>"
     },
     {
       "id": "command-meas",
@@ -137,7 +142,8 @@
         "command-tran",
         "command-ac",
         "command-options"
-      ]
+      ],
+      "preview": ".meas <analysis> <result> <function> <args>"
     },
     {
       "id": "command-temp",
@@ -158,7 +164,8 @@
         "command-step",
         "command-options",
         "command-model"
-      ]
+      ],
+      "preview": ".temp <t1> <t2> ..."
     },
     {
       "id": "command-ic",
@@ -180,7 +187,8 @@
         "command-options",
         "error-time-step-too-small",
         "error-singular-matrix"
-      ]
+      ],
+      "preview": ".ic V(<node>)=<value> [V(<node2>)=<value2> ...]"
     },
     {
       "id": "command-options",
@@ -208,7 +216,8 @@
         "error-time-step-too-small",
         "error-gmin-step-failed",
         "error-iteration-limit-reached"
-      ]
+      ],
+      "preview": ".options <param1>=<value1> [<param2>=<value2> ...]"
     },
     {
       "id": "command-model",
@@ -231,7 +240,8 @@
       ],
       "related": [
         "error-unknown-device"
-      ]
+      ],
+      "preview": ".model <name> <type> (<param1>=<value1> <param2>=<value2> ...)"
     },
     {
       "id": "error-time-step-too-small",
@@ -255,7 +265,8 @@
         "command-ic",
         "error-gmin-step-failed",
         "error-source-stepping-failed"
-      ]
+      ],
+      "preview": ".options gmin=1e-12 cshunt=1e-15"
     },
     {
       "id": "error-singular-matrix",
@@ -278,7 +289,8 @@
         "command-ic",
         "command-options",
         "command-op"
-      ]
+      ],
+      "preview": ".options gmin=1e-12"
     },
     {
       "id": "error-node-is-floating",
@@ -299,7 +311,8 @@
         "error-singular-matrix",
         "command-options",
         "command-op"
-      ]
+      ],
+      "preview": ".options gmin=1e-12"
     },
     {
       "id": "error-unknown-parameter",
@@ -318,7 +331,8 @@
       "related": [
         "command-model",
         "error-unknown-device"
-      ]
+      ],
+      "preview": "Unknown parameter"
     },
     {
       "id": "error-unknown-device",
@@ -338,7 +352,8 @@
       "related": [
         "command-model",
         "error-unknown-parameter"
-      ]
+      ],
+      "preview": ".include \"mymodel.lib\""
     },
     {
       "id": "error-gmin-step-failed",
@@ -361,7 +376,8 @@
         "command-ic",
         "error-source-stepping-failed",
         "error-time-step-too-small"
-      ]
+      ],
+      "preview": ".options gmin=1e-9 cshunt=1e-12"
     },
     {
       "id": "error-source-stepping-failed",
@@ -384,7 +400,8 @@
         "command-ic",
         "error-gmin-step-failed",
         "error-time-step-too-small"
-      ]
+      ],
+      "preview": ".options gmin=1e-9 cshunt=1e-12"
     },
     {
       "id": "error-iteration-limit-reached",
@@ -407,7 +424,8 @@
         "command-op",
         "command-tran",
         "error-time-step-too-small"
-      ]
+      ],
+      "preview": ".options itl1=500 itl4=50"
     },
     {
       "id": "error-duplicate-device-name",
@@ -426,7 +444,8 @@
       "related": [
         "error-singular-matrix",
         "error-node-is-floating"
-      ]
+      ],
+      "preview": "Duplicate device name"
     },
     {
       "id": "error-syntax-error",
@@ -448,7 +467,8 @@
         "command-op",
         "command-ac",
         "command-model"
-      ]
+      ],
+      "preview": "Syntax error"
     }
   ]
 }

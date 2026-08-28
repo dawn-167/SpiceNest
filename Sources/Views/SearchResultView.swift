@@ -175,6 +175,7 @@ final class SearchResultView: NSView {
             let header = SectionHeaderView()
             header.title = type.displayName
             header.count = items.count
+            header.contentType = type
             header.translatesAutoresizingMaskIntoConstraints = false
             stackView.addArrangedSubview(header)
             NSLayoutConstraint.activate([
