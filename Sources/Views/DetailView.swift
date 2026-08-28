@@ -80,12 +80,16 @@ final class DetailView: NSView {
         contentStackView.alignment = .leading
         scrollView.documentView = contentStackView
 
-        // 标题
+        // 标题（带阴影效果，增强质感）
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.font = NSFont.systemFont(ofSize: 20, weight: .bold)
         titleLabel.textColor = .labelColor
         titleLabel.lineBreakMode = .byWordWrapping
         titleLabel.maximumNumberOfLines = 0
+        titleLabel.shadow = NSShadow()
+        titleLabel.shadow?.shadowColor = NSColor.black.withAlphaComponent(0.1)
+        titleLabel.shadow?.shadowOffset = NSSize(width: 0, height: -1)
+        titleLabel.shadow?.shadowBlurRadius = 1
         contentStackView.addArrangedSubview(titleLabel)
 
         // 中文标题（13pt Body）

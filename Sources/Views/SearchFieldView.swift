@@ -54,11 +54,20 @@ final class SearchFieldView: NSView {
     private func setupUI() {
         wantsLayer = false
 
-        // 背景视图（圆角 + 边框 + 阴影）
+        // 背景视图（渐变 + 圆角 + 边框 + 内阴影）
         backgroundView.translatesAutoresizingMaskIntoConstraints = false
         backgroundView.wantsLayer = true
         backgroundView.layer?.cornerRadius = 10
-        backgroundView.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+        // 渐变背景（顶亮底暗，增强立体感）
+        let gradient = CAGradientLayer()
+        gradient.colors = [
+            NSColor(white: 0.99, alpha: 1.0).cgColor,
+            NSColor(white: 0.96, alpha: 1.0).cgColor
+        ]
+        gradient.startPoint = CGPoint(x: 0, y: 0)
+        gradient.endPoint = CGPoint(x: 0, y: 1)
+        gradient.cornerRadius = 10
+        backgroundView.layer?.insertSublayer(gradient, at: 0)
         backgroundView.layer?.borderWidth = 1
         backgroundView.layer?.borderColor = NSColor.separatorColor.cgColor
         addSubview(backgroundView)

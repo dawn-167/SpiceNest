@@ -49,12 +49,16 @@ final class HomeView: NSView {
     private func setupUI() {
         wantsLayer = true
 
-        // Logo
+        // Logo（带阴影效果，增强质感）
         logoLabel.translatesAutoresizingMaskIntoConstraints = false
         logoLabel.stringValue = "SpiceNest"
         logoLabel.font = NSFont(name: "Impact", size: 28) ?? NSFont.systemFont(ofSize: 28, weight: .bold)
         logoLabel.textColor = NSColor(calibratedRed: 1.0, green: 0.584, blue: 0.0, alpha: 1.0)
         logoLabel.alignment = .center
+        logoLabel.shadow = NSShadow()
+        logoLabel.shadow?.shadowColor = NSColor.black.withAlphaComponent(0.15)
+        logoLabel.shadow?.shadowOffset = NSSize(width: 0, height: -1)
+        logoLabel.shadow?.shadowBlurRadius = 2
         addSubview(logoLabel)
 
         // 副标题

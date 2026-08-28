@@ -96,18 +96,28 @@ final class CategoryTagView: NSView {
             // 禁用态：次文字色，可视但不可点
             layer?.backgroundColor = NSColor.clear.cgColor
             label.textColor = .tertiaryLabelColor
+            layer?.shadowOpacity = 0
         } else if isSelected {
-            // 选中态：琥珀色背景 alpha 0.12，文字琥珀色
+            // 选中态：琥珀色背景 alpha 0.12，文字琥珀色，发光效果
             layer?.backgroundColor = amber.withAlphaComponent(0.12).cgColor
             label.textColor = amber
+            layer?.shadowColor = amber.cgColor
+            layer?.shadowOpacity = 0.25
+            layer?.shadowRadius = 6
+            layer?.shadowOffset = CGSize(width: 0, height: 0)
         } else if isHovering {
-            // 悬停态：琥珀色背景 alpha 0.08，文字琥珀色
+            // 悬停态：琥珀色背景 alpha 0.08，文字琥珀色，轻微发光
             layer?.backgroundColor = amber.withAlphaComponent(0.08).cgColor
             label.textColor = amber
+            layer?.shadowColor = amber.cgColor
+            layer?.shadowOpacity = 0.15
+            layer?.shadowRadius = 4
+            layer?.shadowOffset = CGSize(width: 0, height: 0)
         } else {
             // 默认态：透明背景，次文字色
             layer?.backgroundColor = NSColor.clear.cgColor
             label.textColor = .secondaryLabelColor
+            layer?.shadowOpacity = 0
         }
     }
 

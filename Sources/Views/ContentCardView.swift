@@ -23,6 +23,10 @@ final class ContentCardView: NSView {
     private let typeTag = TagView()
     private let copyButton = NSButton()
 
+    // 立体感图层
+    private let gradientLayer = CAGradientLayer()
+    private let highlightLayer = CALayer()
+
     private var item: ContentItem?
     private var trackingArea: NSTrackingArea?
 
@@ -42,15 +46,31 @@ final class ContentCardView: NSView {
 
     private func setupUI() {
         wantsLayer = true
-        layer?.cornerRadius = 10
-        layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+        layer?.cornerRadius = 12
+        layer?.masksToBounds = false
         layer?.borderWidth = 1
         layer?.borderColor = NSColor.clear.cgColor
-        // 默认阴影（规范 0 1pt 4pt rgba(0,0,0,0.06)）
+        // 大阴影（立体感）
         layer?.shadowColor = NSColor.black.cgColor
-        layer?.shadowOpacity = 0.06
-        layer?.shadowRadius = 4
-        layer?.shadowOffset = CGSize(width: 0, height: -1)
+        layer?.shadowOpacity = 0.12
+        layer?.shadowRadius = 8
+        layer?.shadowOffset = CGSize(width: 0, height: -2)
+
+        // 渐变背景（顶亮底暗，增强立体感）
+        gradientLayer.cornerRadius = 12
+        gradientLayer.colors = [
+            NSColor(white: 0.98, alpha: 1.0).cgColor,
+            NSColor(white: 0.95, alpha: 1.0).cgColor
+        ]
+        gradientLayer.startPoint = CGPoint(x: 0, y: 0)
+        gradientLayer.endPoint = CGPoint(x: 0, y: 1)
+        layer?.insertSublayer(gradientLayer, at: 0)
+
+        // 顶部高光线（增强立体感）
+        highlightLayer.backgroundColor = NSColor.white.withAlphaComponent(0.4).cgColor
+        highlightLayer.cornerRadius = 12
+        highlightLayer.masksToBounds = true
+        layer?.insertSublayer(highlightLayer, above: gradientLayer)
 
         // 类型图标
         iconView.translatesAutoresizingMaskIntoConstraints = false
@@ -143,6 +163,15 @@ final class ContentCardView: NSView {
         ])
     }
 
+    override func layout() {
+        super.layout()
+        // 更新渐变层和高光线层的 frame
+        gradientLayer.frame = bounds
+        highlightLayer.frame = bounds
+        // 高光线只显示顶部 1pt
+        highlightLayer.frame = CGRect(x: 0, y: bounds.height - 1, width: bounds.width, height: 1)
+    }
+
     // MARK: - 跟踪区域
 
     private func setupTrackingArea() {
@@ -232,22 +261,25 @@ final class ContentCardView: NSView {
             context.duration = 0.15
             context.allowsImplicitAnimation = true
 
+            let amber = NSColor(calibratedRed: 1.0, green: 0.584, blue: 0.0, alpha: 1.0)
+
             if hovering {
-                layer?.borderColor = NSColor(calibratedRed: 1.0, green: 0.584, blue: 0.0, alpha: 0.6).cgColor
-                layer?.shadowColor = NSColor.black.cgColor
-                layer?.shadowOpacity = 0.15
-                layer?.shadowRadius = 8
-                layer?.shadowOffset = CGSize(width: 0, height: -3)
+                layer?.borderColor = amber.withAlphaComponent(0.6).cgColor
+                // 琥珀色发光效果
+                layer?.shadowColor = amber.cgColor
+                layer?.shadowOpacity = 0.3
+                layer?.shadowRadius = 12
+                layer?.shadowOffset = CGSize(width: 0, height: 0)
                 // 用 layer.transform 上移 3pt，替代 setFrameOrigin 避免布局抖动
                 layer?.transform = CATransform3DMakeTranslation(0, 3, 0)
                 copyButton.isHidden = false
             } else {
                 layer?.borderColor = NSColor.clear.cgColor
-                // 恢复默认阴影
+                // 恢复默认大阴影
                 layer?.shadowColor = NSColor.black.cgColor
-                layer?.shadowOpacity = 0.06
-                layer?.shadowRadius = 4
-                layer?.shadowOffset = CGSize(width: 0, height: -1)
+                layer?.shadowOpacity = 0.12
+                layer?.shadowRadius = 8
+                layer?.shadowOffset = CGSize(width: 0, height: -2)
                 layer?.transform = CATransform3DIdentity
                 copyButton.isHidden = true
             }

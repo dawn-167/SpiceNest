@@ -33,12 +33,47 @@ final class CopyableCodeView: NSView {
         fatalError("init(coder:) has not been implemented")
     }
 
+    override func layout() {
+        super.layout()
+        // 更新渐变层和高光线层的 frame
+        guard let sublayers = layer?.sublayers, sublayers.count >= 2 else { return }
+        if let gradient = sublayers[0] as? CAGradientLayer {
+            gradient.frame = bounds
+        }
+        let highlight = sublayers[1]
+        highlight.frame = CGRect(x: 0, y: bounds.height - 1, width: bounds.width, height: 1)
+    }
+
     // MARK: - UI 设置
 
     private func setupUI() {
         wantsLayer = true
         layer?.cornerRadius = 6
-        layer?.backgroundColor = NSColor(calibratedRed: 0.12, green: 0.12, blue: 0.14, alpha: 1.0).cgColor
+        layer?.masksToBounds = false
+        // 大阴影（立体感）
+        layer?.shadowColor = NSColor.black.cgColor
+        layer?.shadowOpacity = 0.15
+        layer?.shadowRadius = 6
+        layer?.shadowOffset = CGSize(width: 0, height: -2)
+
+        // 渐变背景（顶亮底暗，增强立体感）
+        let gradient = CAGradientLayer()
+        gradient.cornerRadius = 6
+        gradient.colors = [
+            NSColor(calibratedRed: 0.15, green: 0.15, blue: 0.17, alpha: 1.0).cgColor,
+            NSColor(calibratedRed: 0.10, green: 0.10, blue: 0.12, alpha: 1.0).cgColor
+        ]
+        gradient.startPoint = CGPoint(x: 0, y: 0)
+        gradient.endPoint = CGPoint(x: 0, y: 1)
+        layer?.insertSublayer(gradient, at: 0)
+
+        // 顶部高光线（增强立体感）
+        let highlight = CALayer()
+        highlight.backgroundColor = NSColor.white.withAlphaComponent(0.08).cgColor
+        highlight.cornerRadius = 6
+        highlight.masksToBounds = true
+        layer?.insertSublayer(highlight, above: gradient)
+        highlight.frame = CGRect(x: 0, y: 0, width: 0, height: 1) // 会在 layout 中更新
 
         // 文本视图（直接使用，不包 ScrollView）
         textView.translatesAutoresizingMaskIntoConstraints = false
