@@ -51,5 +51,8 @@
     "MOSFET 常用参数：VTO、KP、GAMMA、PHI、LAMBDA、RD、RS、RG、CBD、CBS、TOX、NSUB、UO",
     "二极管常用参数：IS、N、RS、IKF、EG、XTI、CJO、VJ、M、FC、TT、BV、IBV",
     "如果报错 'Unknown parameter'，说明参数名拼写错误或该器件类型不支持此参数"
+  ],
+  "related": [
+    "error-unknown-device"
   ]
 }

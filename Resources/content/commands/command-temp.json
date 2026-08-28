@@ -33,5 +33,10 @@
     "注意：.temp 是仿真温度，tnom 是模型参数标称温度，两者不同",
     "温度扫描也可以用 .step temp list -40 0 25 85 125 实现，效果相同",
     "元器件的温度系数在 .model 中定义（如电阻的 tc1、tc2，BJT 的 xti、eg 等）"
+  ],
+  "related": [
+    "command-step",
+    "command-options",
+    "command-model"
   ]
 }

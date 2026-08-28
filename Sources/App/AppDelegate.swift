@@ -44,6 +44,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setupStatusItem()
         setupHotKey()
         setupPageCallbacks()
+        refreshFavoritesUI()
         showPage(.home)
         showWindow()
     }
@@ -82,7 +83,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupWindow() {
         let win = NXWindowStyle.makeFloatingWindow(
-            size: NSSize(width: 560, height: 600),
+            size: NSSize(width: 560, height: 640),
             title: "SpiceNest",
             tintColor: NSColor(red: 1.0, green: 0.584, blue: 0.0, alpha: 0.12),
             fixedWidth: true
@@ -131,6 +132,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         homeView.onCategoryClick = { [weak self] type in
             self?.handleCategoryClick(type)
         }
+        homeView.onFavoriteItemClick = { [weak self] item in
+            self?.showDetail(item)
+        }
 
         // 搜索结果页
         searchResultView.onSearchTextChange = { [weak self] text in
@@ -158,6 +162,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         detailView.onCopyAll = { [weak self] item in
             self?.copyItem(item)
+        }
+        detailView.onRelatedItemClick = { [weak self] item in
+            self?.showDetail(item)
         }
     }
 
@@ -236,7 +243,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             break
         }
 
-        detailView.configure(with: item, commandDetail: commandDetail, errorDetail: errorDetail)
+        // 加载关联内容
+        let relatedItems = item.related.compactMap { relatedId in
+            contentLoader.allItems.first { $0.id == relatedId }
+        }
+
+        detailView.configure(with: item, commandDetail: commandDetail, errorDetail: errorDetail, relatedItems: relatedItems)
         detailView.setFavorite(favorites.contains(item.id))
         showPage(.detail)
     }
@@ -249,11 +261,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         switch item.type {
         case .command:
             if let detail = contentLoader.loadCommandDetail(id: item.id) {
-                textToCopy = detail.syntax.first ?? item.title
+                textToCopy = detail.syntax.joined(separator: "\n")
             }
         case .error:
             if let detail = contentLoader.loadErrorDetail(id: item.id) {
-                textToCopy = detail.copyableCommands.first ?? item.title
+                textToCopy = detail.copyableCommands.joined(separator: "\n")
             }
         default:
             textToCopy = item.title
@@ -285,6 +297,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             favorites.append(item.id)
         }
         saveFavorites()
+        refreshFavoritesUI()
+    }
+
+    /// 刷新首页收藏列表
+    private func refreshFavoritesUI() {
+        let items = favorites.compactMap { id in
+            contentLoader.allItems.first { $0.id == id }
+        }
+        homeView.updateFavorites(items)
     }
 
     // MARK: - 全局热键

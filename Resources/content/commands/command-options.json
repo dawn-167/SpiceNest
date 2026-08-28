@@ -89,5 +89,13 @@
     "method=gear 对刚性电路（stiff）更稳定，但数值阻尼更大，可能影响高频精度",
     "LTspice 有自动收敛算法（Gmin stepping、Source stepping），默认会自动尝试",
     "所有选项都可以在 Simulate > Edit Simulation Cmd > Options 中图形化设置"
+  ],
+  "related": [
+    "command-tran",
+    "command-op",
+    "command-ic",
+    "error-time-step-too-small",
+    "error-gmin-step-failed",
+    "error-iteration-limit-reached"
   ]
 }

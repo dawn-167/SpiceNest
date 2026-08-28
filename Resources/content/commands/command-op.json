@@ -15,5 +15,10 @@
     "其他仿真（.tran、.ac）在开始前都会先执行一次 .op 来确定初始工作点",
     "如果 .op 不收敛，后续仿真也会失败，需要先解决直流收敛问题",
     "可以通过 .options 调整 itl1（直流迭代上限）、gmin（最小电导）来帮助收敛"
+  ],
+  "related": [
+    "command-dc",
+    "command-tran",
+    "command-options"
   ]
 }

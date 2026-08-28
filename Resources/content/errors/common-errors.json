@@ -14,6 +14,13 @@
     "copyableCommands": [
       ".options gmin=1e-12 cshunt=1e-15",
       ".tran 0 10m 1u"
+    ],
+    "related": [
+      "command-tran",
+      "command-options",
+      "command-ic",
+      "error-gmin-step-failed",
+      "error-source-stepping-failed"
     ]
   },
   {
@@ -30,6 +37,12 @@
     ],
     "copyableCommands": [
       ".options gmin=1e-12"
+    ],
+    "related": [
+      "error-node-is-floating",
+      "command-ic",
+      "command-options",
+      "command-op"
     ]
   },
   {
@@ -46,6 +59,11 @@
     ],
     "copyableCommands": [
       ".options gmin=1e-12"
+    ],
+    "related": [
+      "error-singular-matrix",
+      "command-options",
+      "command-op"
     ]
   },
   {
@@ -60,7 +78,11 @@
       "检查是否有多余的空格或特殊字符",
       "如果是第三方模型，确认模型语法与 LTspice 兼容"
     ],
-    "copyableCommands": []
+    "copyableCommands": [],
+    "related": [
+      "command-model",
+      "error-unknown-device"
+    ]
   },
   {
     "id": "error-unknown-device",
@@ -76,6 +98,10 @@
     ],
     "copyableCommands": [
       ".include \"mymodel.lib\""
+    ],
+    "related": [
+      "command-model",
+      "error-unknown-parameter"
     ]
   },
   {
@@ -93,6 +119,13 @@
     ],
     "copyableCommands": [
       ".options gmin=1e-9 cshunt=1e-12"
+    ],
+    "related": [
+      "command-op",
+      "command-options",
+      "command-ic",
+      "error-source-stepping-failed",
+      "error-time-step-too-small"
     ]
   },
   {
@@ -111,6 +144,13 @@
     "copyableCommands": [
       ".options gmin=1e-9 cshunt=1e-12",
       ".tran 0 10m uic"
+    ],
+    "related": [
+      "command-op",
+      "command-options",
+      "command-ic",
+      "error-gmin-step-failed",
+      "error-time-step-too-small"
     ]
   },
   {
@@ -129,6 +169,12 @@
     "copyableCommands": [
       ".options itl1=500 itl4=50",
       ".options reltol=0.01 abstol=1e-9 vntol=1e-5"
+    ],
+    "related": [
+      "command-options",
+      "command-op",
+      "command-tran",
+      "error-time-step-too-small"
     ]
   },
   {
@@ -143,7 +189,11 @@
       "检查子电路内部是否有与外部冲突的标号",
       "删除重复的元器件或修改其标号"
     ],
-    "copyableCommands": []
+    "copyableCommands": [],
+    "related": [
+      "error-singular-matrix",
+      "error-node-is-floating"
+    ]
   },
   {
     "id": "error-syntax-error",
@@ -158,6 +208,12 @@
       "如果是手写网表，检查元器件行的格式（节点名、值、模型名）",
       "第三方模型可能使用 PSpice 语法，需要转换为 LTspice 兼容格式"
     ],
-    "copyableCommands": []
+    "copyableCommands": [],
+    "related": [
+      "command-tran",
+      "command-op",
+      "command-ac",
+      "command-model"
+    ]
   }
 ]

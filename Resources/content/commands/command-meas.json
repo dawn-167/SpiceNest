@@ -49,5 +49,10 @@
     "VAL 是阈值，RISE/FALL 指定第几次上升/下降沿，CROSS 指定第几次穿越",
     "FROM/TO 限定测量的时间/频率范围，不指定则测量整个范围",
     "交流分析中用 Vdb() 表示 dB 值，Vp() 表示相位"
+  ],
+  "related": [
+    "command-tran",
+    "command-ac",
+    "command-options"
   ]
 }

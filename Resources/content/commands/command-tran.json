@@ -56,5 +56,12 @@
     "如果仿真报错 'Time step too small'，可以尝试增大 tmax 或添加 .options gmin/cshunt",
     "uic 参数强制仿真器使用 .ic 设置的初始条件，而不是先计算直流工作点",
     "时间单位：s=秒, m=毫秒, u=微秒, n=纳秒, p=皮秒"
+  ],
+  "related": [
+    "command-step",
+    "command-meas",
+    "command-ic",
+    "command-options",
+    "error-time-step-too-small"
   ]
 }

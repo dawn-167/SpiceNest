@@ -10,4 +10,5 @@ struct ErrorDetail: Codable, Identifiable {
     let cause: String           // 原因分析
     let solutions: [String]     // 解决方案（编号列表）
     let copyableCommands: [String] // 可复制的修复指令
+    let related: [String]       // 关联内容的 id 列表
 }

@@ -15,6 +15,9 @@ final class DetailView: NSView {
     /// 点击复制全部回调
     var onCopyAll: ((ContentItem) -> Void)?
 
+    /// 点击关联内容回调
+    var onRelatedItemClick: ((ContentItem) -> Void)?
+
     // MARK: - 属性
 
     private let backButton = NSButton()
@@ -29,6 +32,7 @@ final class DetailView: NSView {
 
     private var item: ContentItem?
     private var isFavorite: Bool = false
+    private var currentRelatedItems: [ContentItem] = []
 
     // MARK: - 初始化
 
@@ -167,7 +171,7 @@ final class DetailView: NSView {
     // MARK: - 公开方法
 
     /// 配置详情页内容
-    func configure(with item: ContentItem, commandDetail: CommandDetail? = nil, errorDetail: ErrorDetail? = nil) {
+    func configure(with item: ContentItem, commandDetail: CommandDetail? = nil, errorDetail: ErrorDetail? = nil, relatedItems: [ContentItem] = []) {
         self.item = item
 
         titleLabel.stringValue = item.title
@@ -188,8 +192,12 @@ final class DetailView: NSView {
             renderCommandDetail(commandDetail)
         } else if let errorDetail = errorDetail {
             renderErrorDetail(errorDetail)
-        } else {
-            renderGenericDetail(item)
+        }
+
+        // 所有类型末尾统一渲染关联内容
+        currentRelatedItems = relatedItems
+        if !relatedItems.isEmpty {
+            renderRelatedItems(relatedItems)
         }
     }
 
@@ -266,14 +274,44 @@ final class DetailView: NSView {
     }
 
     private func renderGenericDetail(_ item: ContentItem) {
-        addSectionTitle("关联内容")
-        if item.related.isEmpty {
-            addTextBlock("暂无关联内容")
-        } else {
-            for relatedId in item.related {
-                addTextBlock("• \(relatedId)")
-            }
+        // 通用详情已由 relatedItems 统一处理，此方法保留为空
+    }
+
+    /// 渲染关联内容（可点击跳转）
+    private func renderRelatedItems(_ items: [ContentItem]) {
+        addSectionTitle("相关内容")
+
+        for (index, relatedItem) in items.enumerated() {
+            let button = NSButton(title: "", target: self, action: #selector(relatedItemClicked(_:)))
+            button.translatesAutoresizingMaskIntoConstraints = false
+            button.bezelStyle = .rounded
+            button.isBordered = false
+            button.alignment = .left
+            button.tag = index
+
+            // 标题 + 类型标签
+            let title = relatedItem.title
+            let typeName = relatedItem.type.displayName
+            let attributedTitle = NSMutableAttributedString(string: "\(title)  ", attributes: [
+                .font: NSFont.systemFont(ofSize: 13, weight: .medium),
+                .foregroundColor: NSColor.labelColor
+            ])
+            attributedTitle.append(NSAttributedString(string: "(\(typeName))", attributes: [
+                .font: NSFont.systemFont(ofSize: 11, weight: .regular),
+                .foregroundColor: NSColor.secondaryLabelColor
+            ]))
+            button.attributedTitle = attributedTitle
+            button.contentTintColor = NSColor(calibratedRed: 1.0, green: 0.584, blue: 0.0, alpha: 1.0)
+
+            contentStackView.addArrangedSubview(button)
+            button.leadingAnchor.constraint(equalTo: contentStackView.leadingAnchor, constant: 4).isActive = true
         }
+    }
+
+    @objc private func relatedItemClicked(_ sender: NSButton) {
+        guard sender.tag >= 0 && sender.tag < currentRelatedItems.count else { return }
+        let item = currentRelatedItems[sender.tag]
+        onRelatedItemClick?(item)
     }
 
     // MARK: - 辅助方法

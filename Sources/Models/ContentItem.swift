@@ -1,4 +1,5 @@
 import Foundation
+import Cocoa
 
 // MARK: - 内容类型枚举
 
@@ -32,6 +33,18 @@ enum ContentType: String, Codable, CaseIterable {
         case .formula: return "function"
         case .tip: return "lightbulb"
         case .topology: return "circle.grid.2x2"
+        }
+    }
+
+    /// 类型主题色（ui-design 3.2）
+    var color: NSColor {
+        switch self {
+        case .command: return NSColor(calibratedRed: 0.0, green: 0.478, blue: 1.0, alpha: 1.0)      // #007AFF 蓝
+        case .parameter: return NSColor(calibratedRed: 0.353, green: 0.784, blue: 0.980, alpha: 1.0)  // #5AC8FA 青
+        case .error: return NSColor(calibratedRed: 1.0, green: 0.584, blue: 0.0, alpha: 1.0)          // #FF9500 橙
+        case .formula: return NSColor(calibratedRed: 0.686, green: 0.322, blue: 0.871, alpha: 1.0)    // #AF52DE 紫
+        case .tip: return NSColor(calibratedRed: 1.0, green: 0.8, blue: 0.0, alpha: 1.0)              // #FFCC00 黄
+        case .topology: return NSColor(calibratedRed: 0.204, green: 0.780, blue: 0.349, alpha: 1.0)   // #34C759 绿
         }
     }
 }

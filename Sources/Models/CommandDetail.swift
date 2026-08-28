@@ -9,6 +9,7 @@ struct CommandDetail: Codable, Identifiable {
     let parameters: [ParamDef]  // 参数说明
     let examples: [Example]     // 示例
     let notes: [String]         // 注意事项
+    let related: [String]       // 关联内容的 id 列表
 }
 
 // MARK: - 参数定义

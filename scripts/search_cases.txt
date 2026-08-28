@@ -1,0 +1,50 @@
+# SpiceNest 搜索回归用例集
+# 用途：每次搜索逻辑改动或内容增加后，跑一遍这些用例验证搜索结果正确
+# 格式：每行一个用例，格式为 "查询词|预期包含的内容id（逗号分隔）|备注"
+# 依据：ERROR_PREVENTION.md 第三章 P1 项 #4
+# 用法：配合 Services 层测试入口使用
+
+# === 精确匹配 ===
+.tran|command-tran|精确指令名
+.ac|command-ac|精确指令名
+.op|command-op|精确指令名
+.dc|command-dc|精确指令名
+.step|command-step|精确指令名
+.meas|command-meas|精确指令名
+.temp|command-temp|精确指令名
+.ic|command-ic|精确指令名
+.options|command-options|精确指令名
+.model|command-model|精确指令名
+
+# === 中文匹配 ===
+瞬态仿真|command-tran|中文标题匹配
+直流扫描|command-dc|中文标题匹配
+交流扫描|command-ac|中文标题匹配
+工作点|command-op|中文标题匹配
+参数扫描|command-step|中文标题匹配
+测量|command-meas|中文标题匹配
+温度扫描|command-temp|中文标题匹配
+初始条件|command-ic|中文标题匹配
+
+# === 错误匹配 ===
+Time step too small|error-time-step-too-small|错误英文标题
+时间步长过小|error-time-step-too-small|错误中文标题
+Singular matrix|error-singular-matrix|错误英文标题
+奇异矩阵|error-singular-matrix|错误中文标题
+Node ... is floating|error-node-is-floating|错误英文标题
+节点悬空|error-node-is-floating|错误中文标题
+
+# === 模糊/标签匹配 ===
+仿真|command-tran,command-options|标签匹配（时间仿真/仿真选项）
+收敛|error-time-step-too-small,error-gmin-step-failed,error-iteration-limit-reached|标签匹配多个错误
+gmin|command-options,error-gmin-step-failed|标签匹配（gmin参数）
+transient|command-tran|英文标签匹配
+
+# === 空结果/边界 ===
+不存在的指令xyz||无结果
+asdfghjkl||无结果
+
+# === 大小写不敏感 ===
+.TRAN|command-tran|大写指令名
+.Tran|command-tran|混合大小写
+TRAN|command-tran|无点号大写

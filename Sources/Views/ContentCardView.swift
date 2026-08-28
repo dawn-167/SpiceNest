@@ -21,7 +21,6 @@ final class ContentCardView: NSView {
     private let summaryLabel = NSTextField(labelWithString: "")
     private let typeTag = TagView()
     private let copyButton = NSButton()
-    private let hoverView = NSView()
 
     private var item: ContentItem?
     private var trackingArea: NSTrackingArea?
@@ -46,13 +45,6 @@ final class ContentCardView: NSView {
         layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
         layer?.borderWidth = 1
         layer?.borderColor = NSColor.clear.cgColor
-
-        // 悬停背景（透明，用于动画）
-        hoverView.translatesAutoresizingMaskIntoConstraints = false
-        hoverView.wantsLayer = true
-        hoverView.layer?.backgroundColor = NSColor.clear.cgColor
-        hoverView.isHidden = true
-        addSubview(hoverView)
 
         // 类型图标
         iconView.translatesAutoresizingMaskIntoConstraints = false
@@ -106,11 +98,6 @@ final class ContentCardView: NSView {
 
     private func setupConstraints() {
         NSLayoutConstraint.activate([
-            hoverView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            hoverView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            hoverView.topAnchor.constraint(equalTo: topAnchor),
-            hoverView.bottomAnchor.constraint(equalTo: bottomAnchor),
-
             iconView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
             iconView.topAnchor.constraint(equalTo: topAnchor, constant: 14),
             iconView.widthAnchor.constraint(equalToConstant: 20),
@@ -169,7 +156,7 @@ final class ContentCardView: NSView {
         let config = NSImage.SymbolConfiguration(pointSize: 16, weight: .medium)
         let icon = NSImage(systemSymbolName: item.type.iconName, accessibilityDescription: nil)?.withSymbolConfiguration(config)
         iconView.image = icon
-        iconView.contentTintColor = NSColor(calibratedRed: 1.0, green: 0.584, blue: 0.0, alpha: 1.0)
+        iconView.contentTintColor = item.type.color
 
         titleLabel.stringValue = item.title
         chineseTitleLabel.stringValue = item.chineseTitle

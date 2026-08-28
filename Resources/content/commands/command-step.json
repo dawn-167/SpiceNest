@@ -57,5 +57,11 @@
     "list 模式适合非均匀的离散点，如温度扫描、特定参数组合",
     "可以嵌套 .step（最多 3 层），但仿真次数会成倍增加",
     "LTspice 中 .step 的结果会在波形查看器中以不同颜色显示多条曲线"
+  ],
+  "related": [
+    "command-dc",
+    "command-tran",
+    "command-ac",
+    "command-options"
   ]
 }

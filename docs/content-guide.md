@@ -442,6 +442,18 @@ IS, N, RS, IKF, EG, XTI, CJO, VJ, M, FC, TT, BV, IBV, IBL, IBR, NB, LB, VB, KF, 
       "outputUnit": "Hz",
       "outputUnitOptions": ["Hz", "kHz", "MHz"]
     },
+    "verify": [
+      {
+        "inputs": {"R": 10000, "C": 1.0e-7},
+        "expected": 159.1549,
+        "tolerance": 0.001
+      },
+      {
+        "inputs": {"R": 1000, "C": 1.0e-6},
+        "expected": 159.1549,
+        "tolerance": 0.001
+      }
+    ],
     "description": "RC 低通滤波器的截止频率，即增益下降到 -3dB（0.707 倍）时的频率。",
     "related": ["formula-rc-time-constant", "formula-rc-highpass-cutoff", "topology-rc-lowpass", "tip-filter-design"]
   }
@@ -456,6 +468,7 @@ IS, N, RS, IKF, EG, XTI, CJO, VJ, M, FC, TT, BV, IBV, IBL, IBR, NB, LB, VB, KF, 
 | formula | String | ✅ | 公式表达式，纯文本，用 × 表示乘号，π 表示圆周率 |
 | variables | Array | ✅ | 公式中所有变量的说明 |
 | calculator | Object | ✅ | 计算器配置，如果不需要计算器则填 null |
+| verify | Array | ✅ | 验证用例列表，用于自动验证计算公式的正确性，详见 6.6 |
 | description | String | ✅ | 公式说明，1-2 句话，说清楚这个公式算什么、什么意思 |
 | related | Array<String> | ✅ | 关联内容 id 列表 |
 
@@ -503,6 +516,31 @@ IS, N, RS, IKF, EG, XTI, CJO, VJ, M, FC, TT, BV, IBV, IBL, IBR, NB, LB, VB, KF, 
 - 第一句话说清楚这个公式算什么
 - 可以补充物理意义（如截止频率是 -3dB 点）
 - 1-2 句话，不要太长
+
+### 6.6 verify 验证用例规范
+
+**用途**：每个带计算器的公式必须提供验证用例，用于在 CalculatorService 实现时自动验证计算公式的正确性，防止计算函数写错或单位换算错误。
+
+**字段说明**：
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| inputs | Object | ✅ | 输入参数键值对，key 为变量名，value 为数值（使用标准单位） |
+| expected | Number | ✅ | 预期输出值（使用标准单位） |
+| tolerance | Number | ❌ | 容差，默认 1e-6；实际值与预期值的差绝对值小于 tolerance 即视为通过 |
+
+**编写要求**：
+- 每个公式至少提供 2 个验证用例（覆盖不同数量级）
+- 输入值使用标准单位（电阻用 Ω，电容用 F，不用前缀）
+- 预期值需要手动计算确认，不能从代码中反推
+- 容差根据公式精度合理设置（一般 1e-6，涉及 π 的可放宽到 1e-3）
+- 验证用例是 CalculatorService 单元测试的输入来源，必须准确
+
+**验证流程**：
+1. 添加新公式时，先写 verify 用例
+2. 在 CalculatorService 中实现计算函数
+3. 运行 `scripts/run_tests.sh`（公式验证部分）自动校验
+4. 所有用例通过后才算公式开发完成
 
 ---
 

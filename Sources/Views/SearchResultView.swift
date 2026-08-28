@@ -32,6 +32,7 @@ final class SearchResultView: NSView {
     private var flatResults: [ContentItem] = []
     private var selectedIndex: Int = -1
     private var cardViews: [ContentCardView] = []
+    private var hoverTimer: Timer?
 
     // MARK: - 初始化
 
@@ -55,7 +56,13 @@ final class SearchResultView: NSView {
             self?.onSearchTextChange?(text)
         }
         searchField.onEnter = { [weak self] text in
-            self?.onSearchEnter?(text)
+            guard let self = self else { return }
+            // 有选中项时 Enter 打开选中项，否则重新搜索
+            if let selected = self.selectedItem {
+                self.onItemClick?(selected)
+            } else {
+                self.onSearchEnter?(text)
+            }
         }
         searchField.onEscape = { [weak self] in
             self?.onEscape?()
@@ -96,7 +103,7 @@ final class SearchResultView: NSView {
             searchField.topAnchor.constraint(equalTo: topAnchor, constant: 12),
             searchField.leadingAnchor.constraint(equalTo: leadingAnchor),
             searchField.trailingAnchor.constraint(equalTo: trailingAnchor),
-            searchField.heightAnchor.constraint(equalToConstant: 44),
+            searchField.heightAnchor.constraint(equalToConstant: 36),
 
             scrollView.topAnchor.constraint(equalTo: searchField.bottomAnchor, constant: 8),
             scrollView.leadingAnchor.constraint(equalTo: leadingAnchor),
@@ -134,10 +141,12 @@ final class SearchResultView: NSView {
         if flatResults.isEmpty {
             emptyState.isHidden = false
             scrollView.isHidden = true
+            stopHoverTimer()
         } else {
             emptyState.isHidden = true
             scrollView.isHidden = false
             renderResults()
+            startHoverTimer()
         }
 
         // 更新搜索框文本
@@ -233,5 +242,46 @@ final class SearchResultView: NSView {
     var selectedItem: ContentItem? {
         guard selectedIndex >= 0 && selectedIndex < flatResults.count else { return nil }
         return flatResults[selectedIndex]
+    }
+
+    // MARK: - 悬停状态全局监听（滚轮兜底）
+
+    private func startHoverTimer() {
+        stopHoverTimer()
+        let timer = Timer(timeInterval: 0.08, target: self, selector: #selector(checkHoverState), userInfo: nil, repeats: true)
+        RunLoop.main.add(timer, forMode: .common)
+        hoverTimer = timer
+    }
+
+    private func stopHoverTimer() {
+        hoverTimer?.invalidate()
+        hoverTimer = nil
+    }
+
+    @objc private func checkHoverState() {
+        // 视图不在窗口中时停止 Timer
+        guard window != nil, !isHidden else {
+            stopHoverTimer()
+            return
+        }
+
+        let mouseLocation = NSEvent.mouseLocation
+        let localPoint = convert(mouseLocation, from: nil)
+
+        for (index, card) in cardViews.enumerated() {
+            // 键盘选中的卡片保持高亮，不被悬停逻辑覆盖
+            if index == selectedIndex {
+                card.applyHoverState(true)
+                continue
+            }
+
+            let cardFrame = card.frame
+            let isHovering = cardFrame.contains(localPoint)
+            card.applyHoverState(isHovering)
+        }
+    }
+
+    deinit {
+        hoverTimer?.invalidate()
     }
 }

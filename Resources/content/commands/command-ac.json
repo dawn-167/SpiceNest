@@ -49,5 +49,10 @@
     "波特图通常用 dec 扫描，频率轴对数坐标",
     "频率单位：Hz=赫兹, k=千赫, meg=兆赫, g=吉赫",
     "可以用 .meas 测量截止频率、增益、相位裕度等参数"
+  ],
+  "related": [
+    "command-op",
+    "command-meas",
+    "command-options"
   ]
 }

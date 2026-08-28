@@ -34,5 +34,11 @@
     ".ic 常用于帮助收敛困难的电路（如振荡器、含理想开关的电路），给一个合理的起始状态",
     "也可以在电容上设置 IC=电压值（如 C1 out 0 1u IC=2.5），效果与 .ic 类似",
     "电感可以设置 IC=电流值（如 L1 in out 10u IC=0.1），设置初始电流"
+  ],
+  "related": [
+    "command-tran",
+    "command-options",
+    "error-time-step-too-small",
+    "error-singular-matrix"
   ]
 }
