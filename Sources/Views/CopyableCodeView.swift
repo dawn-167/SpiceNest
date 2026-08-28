@@ -41,7 +41,7 @@ final class CopyableCodeView: NSView {
             gradient.frame = bounds
         }
         let highlight = sublayers[1]
-        highlight.frame = CGRect(x: 0, y: bounds.height - 1, width: bounds.width, height: 1)
+        highlight.frame = CGRect(x: 0, y: 0, width: bounds.width, height: 1)
     }
 
     // MARK: - UI 设置
@@ -69,8 +69,8 @@ final class CopyableCodeView: NSView {
 
         // 顶部高光线（增强立体感）
         let highlight = CALayer()
-        highlight.backgroundColor = NSColor.white.withAlphaComponent(0.08).cgColor
-        highlight.cornerRadius = 6
+        highlight.backgroundColor = NSColor.white.withAlphaComponent(0.12).cgColor
+        highlight.cornerRadius = 0
         highlight.masksToBounds = true
         layer?.insertSublayer(highlight, above: gradient)
         highlight.frame = CGRect(x: 0, y: 0, width: 0, height: 1) // 会在 layout 中更新

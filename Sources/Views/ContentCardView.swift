@@ -59,17 +59,19 @@ final class ContentCardView: NSView {
         // 渐变背景（顶亮底暗，增强立体感）
         gradientLayer.cornerRadius = 12
         gradientLayer.colors = [
-            NSColor(white: 0.98, alpha: 1.0).cgColor,
-            NSColor(white: 0.95, alpha: 1.0).cgColor
+            NSColor(white: 1.0, alpha: 1.0).cgColor,
+            NSColor(white: 0.92, alpha: 1.0).cgColor
         ]
         gradientLayer.startPoint = CGPoint(x: 0, y: 0)
         gradientLayer.endPoint = CGPoint(x: 0, y: 1)
+        gradientLayer.frame = CGRect(x: 0, y: 0, width: 300, height: 100) // 初始 frame，layout 时更新
         layer?.insertSublayer(gradientLayer, at: 0)
 
-        // 顶部高光线（增强立体感）
-        highlightLayer.backgroundColor = NSColor.white.withAlphaComponent(0.4).cgColor
-        highlightLayer.cornerRadius = 12
+        // 顶部高光线（增强立体感，只显示顶部1pt）
+        highlightLayer.backgroundColor = NSColor.white.withAlphaComponent(0.5).cgColor
+        highlightLayer.cornerRadius = 0
         highlightLayer.masksToBounds = true
+        highlightLayer.frame = CGRect(x: 0, y: 0, width: 300, height: 1) // 初始 frame，layout 时更新
         layer?.insertSublayer(highlightLayer, above: gradientLayer)
 
         // 类型图标
@@ -167,9 +169,8 @@ final class ContentCardView: NSView {
         super.layout()
         // 更新渐变层和高光线层的 frame
         gradientLayer.frame = bounds
-        highlightLayer.frame = bounds
         // 高光线只显示顶部 1pt
-        highlightLayer.frame = CGRect(x: 0, y: bounds.height - 1, width: bounds.width, height: 1)
+        highlightLayer.frame = CGRect(x: 0, y: 0, width: bounds.width, height: 1)
     }
 
     // MARK: - 跟踪区域

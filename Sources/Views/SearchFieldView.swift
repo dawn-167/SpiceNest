@@ -28,6 +28,7 @@ final class SearchFieldView: NSView {
     private let iconView = NSImageView()
     private let textField = NSTextField()
     private let clearButton = NSButton()
+    private let gradientLayer = CAGradientLayer()
     private var debounceTimer: Timer?
 
     var text: String {
@@ -59,15 +60,14 @@ final class SearchFieldView: NSView {
         backgroundView.wantsLayer = true
         backgroundView.layer?.cornerRadius = 10
         // 渐变背景（顶亮底暗，增强立体感）
-        let gradient = CAGradientLayer()
-        gradient.colors = [
-            NSColor(white: 0.99, alpha: 1.0).cgColor,
-            NSColor(white: 0.96, alpha: 1.0).cgColor
+        gradientLayer.colors = [
+            NSColor(white: 1.0, alpha: 1.0).cgColor,
+            NSColor(white: 0.94, alpha: 1.0).cgColor
         ]
-        gradient.startPoint = CGPoint(x: 0, y: 0)
-        gradient.endPoint = CGPoint(x: 0, y: 1)
-        gradient.cornerRadius = 10
-        backgroundView.layer?.insertSublayer(gradient, at: 0)
+        gradientLayer.startPoint = CGPoint(x: 0, y: 0)
+        gradientLayer.endPoint = CGPoint(x: 0, y: 1)
+        gradientLayer.cornerRadius = 10
+        backgroundView.layer?.insertSublayer(gradientLayer, at: 0)
         backgroundView.layer?.borderWidth = 1
         backgroundView.layer?.borderColor = NSColor.separatorColor.cgColor
         addSubview(backgroundView)
@@ -141,6 +141,12 @@ final class SearchFieldView: NSView {
     /// 聚焦搜索框
     func focus() {
         window?.makeFirstResponder(textField)
+    }
+
+    override func layout() {
+        super.layout()
+        // 更新渐变层 frame
+        gradientLayer.frame = backgroundView.bounds
     }
 
     /// 清除搜索内容
