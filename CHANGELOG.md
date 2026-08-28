@@ -5,6 +5,22 @@ All notable changes to SpiceNest will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-08-29
+
+### Fixed
+- P-050：拉伸窗口导致页面移动 → 窗口锁定 520×640（min=max），宽度 560→520
+- P-051：卡片底部白线 → 高光线按图层几何方向定位到顶部；同步修正渐变层颜色顺序
+- P-053：滚动后悬停卡片一直亮 → 监听滚动边界变化即时重算悬停 + applyHoverState 幂等守卫
+- P-056：详情页代码块比正文宽 → 文字与代码块共用同一内容列宽
+- P-057：搜索结果页白茫茫、卡片贴太近 → 组间距 16pt、卡片间距 8pt、底部留白
+- P-058：收藏卡片悬停上浮被裁剪 → 收藏区滚动视图增加内边距预留动效空间
+- P-059：窗口首次布局被内容撑宽（701/934pt）→ 容器定宽锚点 520 + 最近查看行等宽约束
+
+### Changed
+- P-052：所有可点击元素统一小手光标（新增 HandCursorButton，覆盖详情页/搜索页/搜索框全部按钮）
+- P-054：删除详情页右下角"复制全部"与代码块复制按钮（代码文字保持可选中复制）
+- P-055："查快捷键"按钮重做为琥珀色胶囊，移至详情页头部行右侧
+
 ## [1.1.0] - 2026-08-28
 
 ### Added

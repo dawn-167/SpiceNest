@@ -94,12 +94,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupWindow() {
         let win = NXWindowStyle.makeFloatingWindow(
-            size: NSSize(width: 560, height: 640),
+            size: NSSize(width: 520, height: 640),
             title: "SpiceNest",
             // 传入透明，避免纯色叠加与毛玻璃底色混合出浊色（P-025）
             tintColor: NSColor.clear,
             fixedWidth: true
         )
+        // 固定窗口尺寸：保留 .resizable 但 min=max 锁死，禁止拉伸也避免系统按内容自适应宽度（P-050）
+        win.minSize = NSSize(width: 520, height: 640)
+        win.maxSize = NSSize(width: 520, height: 640)
         win.center()
         window = win
 
@@ -116,7 +119,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             containerView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            // 定宽锚点：窗口首次布局会按内容 fittingSize 自适应，此约束把目标锁定为 520（P-059）
+            containerView.widthAnchor.constraint(equalToConstant: 520)
         ])
 
         // 添加三个页面视图到容器
@@ -201,9 +206,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         detailView.onFavorite = { [weak self] item in
             self?.toggleFavorite(item)
-        }
-        detailView.onCopyAll = { [weak self] item in
-            self?.copyItem(item)
         }
         detailView.onRelatedItemClick = { [weak self] item in
             self?.showDetail(item)

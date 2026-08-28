@@ -26,7 +26,7 @@ final class SearchResultView: NSView {
 
     // MARK: - 属性
 
-    private let backButton = NSButton()
+    private let backButton = HandCursorButton()
     private let searchField = SearchFieldView()
     private let scrollView = NSScrollView()
     private let stackView = FlippedStackView()
@@ -95,6 +95,15 @@ final class SearchResultView: NSView {
         scrollView.drawsBackground = false
         scrollView.automaticallyAdjustsContentInsets = false
         addSubview(scrollView)
+
+        // 滚动时立即重估悬停态，避免滚走后卡片仍保持点亮（P-053）
+        scrollView.contentView.postsBoundsChangedNotifications = true
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(scrollBoundsDidChange(_:)),
+            name: NSView.boundsDidChangeNotification,
+            object: scrollView.contentView
+        )
 
         // 堆栈视图（容器）
         stackView.translatesAutoresizingMaskIntoConstraints = false
@@ -191,8 +200,16 @@ final class SearchResultView: NSView {
     private func renderResults() {
         let sortedTypes = ContentType.allCases.filter { results[$0] != nil && !results[$0]!.isEmpty }
 
-        for type in sortedTypes {
+        for (groupIndex, type) in sortedTypes.enumerated() {
             guard let items = results[type], !items.isEmpty else { continue }
+
+            // 分组间距（首个分组除外，顶部已有 8pt 内边距）
+            if groupIndex > 0 {
+                let gap = NSView()
+                gap.translatesAutoresizingMaskIntoConstraints = false
+                stackView.addArrangedSubview(gap)
+                gap.heightAnchor.constraint(equalToConstant: 16).isActive = true
+            }
 
             // 分组标题
             let header = SectionHeaderView()
@@ -207,7 +224,7 @@ final class SearchResultView: NSView {
                 header.heightAnchor.constraint(equalToConstant: 28)
             ])
 
-            // 结果卡片
+            // 结果卡片（卡片之间 8pt 间距，避免贴得太近，P-057）
             for item in items {
                 let card = ContentCardView()
                 card.configure(with: item)
@@ -225,14 +242,19 @@ final class SearchResultView: NSView {
                     card.heightAnchor.constraint(greaterThanOrEqualToConstant: 90)
                 ])
                 cardViews.append(card)
-            }
 
-            // 分组间距
-            let spacer = NSView()
-            spacer.translatesAutoresizingMaskIntoConstraints = false
-            stackView.addArrangedSubview(spacer)
-            spacer.heightAnchor.constraint(equalToConstant: 8).isActive = true
+                let spacer = NSView()
+                spacer.translatesAutoresizingMaskIntoConstraints = false
+                stackView.addArrangedSubview(spacer)
+                spacer.heightAnchor.constraint(equalToConstant: 8).isActive = true
+            }
         }
+
+        // 底部滚动余量
+        let bottomPad = NSView()
+        bottomPad.translatesAutoresizingMaskIntoConstraints = false
+        stackView.addArrangedSubview(bottomPad)
+        bottomPad.heightAnchor.constraint(equalToConstant: 8).isActive = true
     }
 
     // MARK: - 键盘操作
@@ -310,7 +332,12 @@ final class SearchResultView: NSView {
         onBack?()
     }
 
+    @objc private func scrollBoundsDidChange(_ note: Notification) {
+        checkHoverState()
+    }
+
     deinit {
         hoverTimer?.invalidate()
+        NotificationCenter.default.removeObserver(self)
     }
 }

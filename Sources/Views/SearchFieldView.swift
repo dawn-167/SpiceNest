@@ -27,7 +27,7 @@ final class SearchFieldView: NSView {
     private let backgroundView = NSView()
     private let iconView = NSImageView()
     private let textField = NSTextField()
-    private let clearButton = NSButton()
+    private let clearButton = HandCursorButton()
     private let gradientLayer = CAGradientLayer()
     private var debounceTimer: Timer?
 
@@ -145,7 +145,8 @@ final class SearchFieldView: NSView {
             light: NSColor(white: 0.94, alpha: 1.0),
             dark: NSColor(red: 0.157, green: 0.157, blue: 0.165, alpha: 1.0)
         )
-        gradientLayer.colors = [topColor.cgColor, bottomColor.cgColor]
+        // 渐变起点 (0,0) 在非翻转图层坐标中是底缘，颜色顺序需底→顶（P-051）
+        gradientLayer.colors = [bottomColor.cgColor, topColor.cgColor]
     }
 
     override func viewDidChangeEffectiveAppearance() {

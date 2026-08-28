@@ -209,6 +209,8 @@ final class HomeView: NSView {
         favoritesScrollView.borderType = .noBorder
         favoritesScrollView.drawsBackground = false
         favoritesScrollView.automaticallyAdjustsContentInsets = false
+        // 内边距：给悬停上浮(3pt)和琥珀发光(12pt)留出空间，避免被容器直角边缘裁剪（P-058）
+        favoritesScrollView.contentInsets = NSEdgeInsets(top: 12, left: 2, bottom: 8, right: 8)
         favoritesScrollView.isHidden = true
         addSubview(favoritesScrollView)
 
@@ -232,6 +234,8 @@ final class HomeView: NSView {
         recentsStackView.spacing = 8
         recentsStackView.alignment = .centerY
         recentsStackView.isHidden = true
+        recentsStackView.wantsLayer = true
+        recentsStackView.layer?.masksToBounds = true
         addSubview(recentsStackView)
 
         setupConstraints()
@@ -295,14 +299,16 @@ final class HomeView: NSView {
             favoritesStackView.trailingAnchor.constraint(equalTo: favoritesScrollView.trailingAnchor),
             favoritesStackView.topAnchor.constraint(equalTo: favoritesScrollView.topAnchor),
             favoritesStackView.bottomAnchor.constraint(equalTo: favoritesScrollView.bottomAnchor),
-            favoritesStackView.heightAnchor.constraint(equalTo: favoritesScrollView.heightAnchor),
+            // 高度 = 卡片高度；12(上内边距) + 110 + 8(下内边距) 恰好填满 130 的滚动视图（P-058）
+            favoritesStackView.heightAnchor.constraint(equalToConstant: 110),
 
             recentsLabel.topAnchor.constraint(equalTo: favoritesScrollView.bottomAnchor, constant: 16),
             recentsLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
 
             recentsStackView.topAnchor.constraint(equalTo: recentsLabel.bottomAnchor, constant: 8),
             recentsStackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-            recentsStackView.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -20)
+            // 等号约束锁死宽度，避免胶囊理想宽度撑开窗口（P-059）；超出的胶囊压缩/裁剪
+            recentsStackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20)
         ])
     }
 

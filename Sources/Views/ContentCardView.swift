@@ -29,6 +29,7 @@ final class ContentCardView: NSView {
 
     private var item: ContentItem?
     private var trackingArea: NSTrackingArea?
+    private var isHovering = false
 
     // MARK: - 初始化
 
@@ -165,8 +166,9 @@ final class ContentCardView: NSView {
         super.layout()
         // 更新渐变层和高光线层的 frame
         gradientLayer.frame = bounds
-        // 高光线只显示顶部 1pt
-        highlightLayer.frame = CGRect(x: 0, y: 0, width: bounds.width, height: 1)
+        // 高光线贴卡片顶缘（图层坐标未翻转时 y=0 是底缘，之前误放底部形成"卡片下方白线"，P-051）
+        let highlightY: CGFloat = (layer?.isGeometryFlipped == true) ? 0 : max(bounds.height - 1, 0)
+        highlightLayer.frame = CGRect(x: 0, y: highlightY, width: bounds.width, height: 1)
     }
 
     override func viewDidChangeEffectiveAppearance() {
@@ -184,7 +186,8 @@ final class ContentCardView: NSView {
             light: NSColor(white: 0.92, alpha: 1.0),
             dark: NSColor(red: 0.141, green: 0.141, blue: 0.149, alpha: 1.0)
         )
-        gradientLayer.colors = [topColor.cgColor, bottomColor.cgColor]
+        // 渐变起点 (0,0) 在非翻转图层坐标中是底缘，颜色顺序需底→顶（P-051）
+        gradientLayer.colors = [bottomColor.cgColor, topColor.cgColor]
         highlightLayer.backgroundColor = NXDynamicColor(
             light: NSColor.white.withAlphaComponent(0.5),
             dark: NSColor.white.withAlphaComponent(0.06)
@@ -275,7 +278,11 @@ final class ContentCardView: NSView {
     // MARK: - 悬停状态
 
     /// 应用悬停状态（公开方法，供外部调用以修复滚轮滚动时的跟踪区域丢失问题）
+    /// 幂等：状态未变化时直接跳过，避免高频重估（滚动中）重复触发动画（P-053）
     func applyHoverState(_ hovering: Bool) {
+        guard isHovering != hovering else { return }
+        isHovering = hovering
+
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.15
             context.allowsImplicitAnimation = true

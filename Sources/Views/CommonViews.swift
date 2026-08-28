@@ -8,6 +8,17 @@ final class FlippedStackView: NSStackView {
     override var isFlipped: Bool { true }
 }
 
+// MARK: - 手型光标按钮
+
+/// 悬停时显示手型光标的按钮
+/// 原生 NSButton 默认箭头光标，所有可点击处统一手型（P-052）
+final class HandCursorButton: NSButton {
+    override func resetCursorRects() {
+        super.resetCursorRects()
+        addCursorRect(bounds, cursor: .pointingHand)
+    }
+}
+
 // MARK: - 动态颜色
 
 /// 生成随浅色/深色外观自动切换的颜色

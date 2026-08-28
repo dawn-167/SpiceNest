@@ -12,9 +12,6 @@ final class DetailView: NSView {
     /// 点击收藏按钮回调
     var onFavorite: ((ContentItem) -> Void)?
 
-    /// 点击复制全部回调
-    var onCopyAll: ((ContentItem) -> Void)?
-
     /// 点击关联内容回调
     var onRelatedItemClick: ((ContentItem) -> Void)?
 
@@ -25,17 +22,16 @@ final class DetailView: NSView {
 
     // MARK: - 属性
 
-    private let backButton = NSButton()
+    private let backButton = HandCursorButton()
     private let scrollView = NSScrollView()
     private let contentStackView = FlippedStackView()
     private let titleLabel = NSTextField(labelWithString: "")
     private let chineseTitleLabel = NSTextField(labelWithString: "")
     private let typeTag = TagView()
     private let summaryLabel = NSTextField(labelWithString: "")
-    private let favoriteButton = NSButton()
-    private let copyAllButton = NSButton()
-    private let keyhubButton = NSButton()
-    private let scrollToTopButton = NSButton()
+    private let favoriteButton = HandCursorButton()
+    private let keyhubButton = HandCursorButton()
+    private let scrollToTopButton = HandCursorButton()
 
     private var item: ContentItem?
     private var isFavorite: Bool = false
@@ -133,31 +129,25 @@ final class DetailView: NSView {
         favoriteButton.contentTintColor = .secondaryLabelColor
         addSubview(favoriteButton)
 
-        copyAllButton.translatesAutoresizingMaskIntoConstraints = false
-        copyAllButton.bezelStyle = .rounded
-        copyAllButton.isBordered = false
-        copyAllButton.title = "复制全部"
-        copyAllButton.target = self
-        copyAllButton.action = #selector(copyAllClicked)
-        let copyConfig = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
-        let copyIcon = NSImage(systemSymbolName: "doc.on.doc", accessibilityDescription: "复制")?.withSymbolConfiguration(copyConfig)
-        copyAllButton.image = copyIcon
-        copyAllButton.imagePosition = .imageLeft
-        copyAllButton.contentTintColor = .secondaryLabelColor
-        addSubview(copyAllButton)
-
-        // KeyHub 按钮
+        // KeyHub 按钮（琥珀胶囊样式：浅琥珀填充 + 琥珀描边，位置在顶部返回按钮同行右侧，P-055）
+        let amber = NSColor(calibratedRed: 1.0, green: 0.584, blue: 0.0, alpha: 1.0)
         keyhubButton.translatesAutoresizingMaskIntoConstraints = false
         keyhubButton.bezelStyle = .rounded
         keyhubButton.isBordered = false
         keyhubButton.title = "查快捷键"
+        keyhubButton.font = NSFont.systemFont(ofSize: 12, weight: .medium)
         keyhubButton.target = self
         keyhubButton.action = #selector(keyhubClicked)
-        let keyhubConfig = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
-        let keyhubIcon = NSImage(systemSymbolName: "arrow.up.right.square", accessibilityDescription: "查快捷键")?.withSymbolConfiguration(keyhubConfig)
+        let keyhubConfig = NSImage.SymbolConfiguration(pointSize: 11, weight: .semibold)
+        let keyhubIcon = NSImage(systemSymbolName: "command", accessibilityDescription: "查快捷键")?.withSymbolConfiguration(keyhubConfig)
         keyhubButton.image = keyhubIcon
         keyhubButton.imagePosition = .imageLeft
-        keyhubButton.contentTintColor = .secondaryLabelColor
+        keyhubButton.contentTintColor = amber
+        keyhubButton.wantsLayer = true
+        keyhubButton.layer?.backgroundColor = amber.withAlphaComponent(0.12).cgColor
+        keyhubButton.layer?.borderWidth = 1
+        keyhubButton.layer?.borderColor = amber.withAlphaComponent(0.4).cgColor
+        keyhubButton.layer?.cornerRadius = 14
         keyhubButton.isHidden = true
         addSubview(keyhubButton)
 
@@ -169,7 +159,6 @@ final class DetailView: NSView {
         let topIcon = NSImage(systemSymbolName: "arrow.up", accessibilityDescription: "回到顶部")?.withSymbolConfiguration(topConfig)
         scrollToTopButton.image = topIcon
         scrollToTopButton.imagePosition = .imageOnly
-        let amber = NSColor(calibratedRed: 1.0, green: 0.584, blue: 0.0, alpha: 1.0)
         scrollToTopButton.contentTintColor = amber
         scrollToTopButton.wantsLayer = true
         scrollToTopButton.layer?.backgroundColor = amber.withAlphaComponent(0.12).cgColor
@@ -196,6 +185,11 @@ final class DetailView: NSView {
             backButton.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
             backButton.heightAnchor.constraint(equalToConstant: 28),
 
+            // 查快捷键：与返回按钮同行靠右（P-055）
+            keyhubButton.centerYAnchor.constraint(equalTo: backButton.centerYAnchor),
+            keyhubButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
+            keyhubButton.heightAnchor.constraint(equalToConstant: 28),
+
             scrollView.topAnchor.constraint(equalTo: backButton.bottomAnchor, constant: 8),
             scrollView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
             scrollView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
@@ -209,14 +203,6 @@ final class DetailView: NSView {
             favoriteButton.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -12),
             favoriteButton.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
             favoriteButton.heightAnchor.constraint(equalToConstant: 28),
-
-            keyhubButton.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -12),
-            keyhubButton.centerXAnchor.constraint(equalTo: centerXAnchor),
-            keyhubButton.heightAnchor.constraint(equalToConstant: 28),
-
-            copyAllButton.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -12),
-            copyAllButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
-            copyAllButton.heightAnchor.constraint(equalToConstant: 28),
 
             scrollToTopButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
             scrollToTopButton.bottomAnchor.constraint(equalTo: favoriteButton.topAnchor, constant: -12),
@@ -337,7 +323,7 @@ final class DetailView: NSView {
         addSectionTitle("相关内容")
 
         for (index, relatedItem) in items.enumerated() {
-            let button = NSButton(title: "", target: self, action: #selector(relatedItemClicked(_:)))
+            let button = HandCursorButton(title: "", target: self, action: #selector(relatedItemClicked(_:)))
             button.translatesAutoresizingMaskIntoConstraints = false
             button.bezelStyle = .rounded
             button.isBordered = false
@@ -386,8 +372,11 @@ final class DetailView: NSView {
         label.textColor = .labelColor
         label.lineBreakMode = .byWordWrapping
         label.maximumNumberOfLines = 0
-        label.preferredMaxLayoutWidth = 500
+        // 限制换行宽度，避免单行长文本撑开窗口；取内容列实际宽度（窗口 520 - 两侧 16）
+        label.preferredMaxLayoutWidth = 488
         contentStackView.addArrangedSubview(label)
+        // 与代码块同宽（撑满内容列）
+        label.widthAnchor.constraint(equalTo: contentStackView.widthAnchor).isActive = true
     }
 
     private func addCodeBlock(_ code: String) {
@@ -396,7 +385,7 @@ final class DetailView: NSView {
         codeView.code = code
         contentStackView.addArrangedSubview(codeView)
         codeView.widthAnchor.constraint(equalTo: contentStackView.widthAnchor).isActive = true
-        let height = CopyableCodeView.preferredHeight(for: code, width: 500)
+        let height = CopyableCodeView.preferredHeight(for: code)
         codeView.heightAnchor.constraint(equalToConstant: height).isActive = true
     }
 
@@ -418,23 +407,6 @@ final class DetailView: NSView {
         guard let item = item else { return }
         setFavorite(!isFavorite)
         onFavorite?(item)
-    }
-
-    @objc private func copyAllClicked() {
-        guard let item = item else { return }
-        onCopyAll?(item)
-        showCopyFeedback()
-    }
-
-    /// 复制成功后按钮短暂显示"已复制"，让用户明确感知作用
-    private func showCopyFeedback() {
-        let originalTitle = copyAllButton.title
-        copyAllButton.title = "已复制 ✓"
-        copyAllButton.contentTintColor = NSColor.systemGreen
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
-            self?.copyAllButton.title = originalTitle
-            self?.copyAllButton.contentTintColor = .secondaryLabelColor
-        }
     }
 
     @objc private func keyhubClicked() {

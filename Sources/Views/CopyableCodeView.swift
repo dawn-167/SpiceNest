@@ -1,19 +1,12 @@
 import Cocoa
 
-// MARK: - 可复制代码块视图
+// MARK: - 代码块视图
 
-/// 深色背景代码块，右上角复制按钮，复制成功变对勾，2秒后恢复
+/// 深色背景代码块，文本可选中复制（P-054：移除悬浮复制按钮，复制走"选中 + ⌘C"或详情页整体操作）
 final class CopyableCodeView: NSView {
-    // MARK: - 回调
-
-    /// 复制完成回调
-    var onCopy: (() -> Void)?
-
     // MARK: - 属性
 
     private let textView = NSTextView()
-    private let copyButton = NSButton()
-    private var isCopied = false
 
     var code: String = "" {
         didSet {
@@ -40,8 +33,10 @@ final class CopyableCodeView: NSView {
         if let gradient = sublayers[0] as? CAGradientLayer {
             gradient.frame = bounds
         }
+        // 高光线贴代码块顶缘（图层坐标未翻转时 y=0 是底缘，P-051）
+        let highlightY: CGFloat = (layer?.isGeometryFlipped == true) ? 0 : max(bounds.height - 1, 0)
         let highlight = sublayers[1]
-        highlight.frame = CGRect(x: 0, y: 0, width: bounds.width, height: 1)
+        highlight.frame = CGRect(x: 0, y: highlightY, width: bounds.width, height: 1)
     }
 
     // MARK: - UI 设置
@@ -59,9 +54,10 @@ final class CopyableCodeView: NSView {
         // 渐变背景（顶亮底暗，增强立体感）
         let gradient = CAGradientLayer()
         gradient.cornerRadius = 6
+        // 渐变起点 (0,0) 在非翻转图层坐标中是底缘，颜色顺序需底→顶（P-051）
         gradient.colors = [
-            NSColor(calibratedRed: 0.15, green: 0.15, blue: 0.17, alpha: 1.0).cgColor,
-            NSColor(calibratedRed: 0.10, green: 0.10, blue: 0.12, alpha: 1.0).cgColor
+            NSColor(calibratedRed: 0.10, green: 0.10, blue: 0.12, alpha: 1.0).cgColor,
+            NSColor(calibratedRed: 0.15, green: 0.15, blue: 0.17, alpha: 1.0).cgColor
         ]
         gradient.startPoint = CGPoint(x: 0, y: 0)
         gradient.endPoint = CGPoint(x: 0, y: 1)
@@ -87,30 +83,11 @@ final class CopyableCodeView: NSView {
         textView.autoresizingMask = [.width, .height]
         addSubview(textView)
 
-        // 复制按钮
-        copyButton.translatesAutoresizingMaskIntoConstraints = false
-        copyButton.bezelStyle = .rounded
-        copyButton.title = ""
-        copyButton.isBordered = false
-        copyButton.target = self
-        copyButton.action = #selector(copyCode)
-        let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
-        let copyIcon = NSImage(systemSymbolName: "doc.on.doc", accessibilityDescription: "复制")?.withSymbolConfiguration(config)
-        copyButton.image = copyIcon
-        copyButton.imagePosition = .imageOnly
-        copyButton.contentTintColor = .secondaryLabelColor
-        addSubview(copyButton)
-
         NSLayoutConstraint.activate([
             textView.leadingAnchor.constraint(equalTo: leadingAnchor),
             textView.trailingAnchor.constraint(equalTo: trailingAnchor),
             textView.topAnchor.constraint(equalTo: topAnchor),
-            textView.bottomAnchor.constraint(equalTo: bottomAnchor),
-
-            copyButton.topAnchor.constraint(equalTo: topAnchor, constant: 6),
-            copyButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -6),
-            copyButton.widthAnchor.constraint(equalToConstant: 24),
-            copyButton.heightAnchor.constraint(equalToConstant: 24)
+            textView.bottomAnchor.constraint(equalTo: bottomAnchor)
         ])
 
         updateVisibility()
@@ -120,39 +97,10 @@ final class CopyableCodeView: NSView {
         isHidden = code.isEmpty
     }
 
-    // MARK: - 复制动作
-
-    @objc private func copyCode() {
-        guard !code.isEmpty else { return }
-
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.setString(code, forType: .string)
-
-        // 切换到对勾图标
-        isCopied = true
-        let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
-        let checkIcon = NSImage(systemSymbolName: "checkmark", accessibilityDescription: "已复制")?.withSymbolConfiguration(config)
-        copyButton.image = checkIcon
-        copyButton.contentTintColor = NSColor.systemGreen
-
-        onCopy?()
-
-        // 2秒后恢复
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
-            guard let self = self, self.isCopied else { return }
-            self.isCopied = false
-            let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
-            let copyIcon = NSImage(systemSymbolName: "doc.on.doc", accessibilityDescription: "复制")?.withSymbolConfiguration(config)
-            self.copyButton.image = copyIcon
-            self.copyButton.contentTintColor = .secondaryLabelColor
-        }
-    }
-
     // MARK: - 高度计算
 
     /// 根据代码内容计算合适的高度
-    static func preferredHeight(for code: String, width: CGFloat) -> CGFloat {
+    static func preferredHeight(for code: String) -> CGFloat {
         let lines = code.components(separatedBy: .newlines).count
         let lineHeight: CGFloat = 18
         let padding: CGFloat = 20
